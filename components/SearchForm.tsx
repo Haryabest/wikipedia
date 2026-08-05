@@ -1,7 +1,9 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { FormEvent, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { X } from 'lucide-react'
+import styles from './SearchForm.module.css'
 
 export function SearchForm() {
   const router = useRouter()
@@ -15,16 +17,33 @@ export function SearchForm() {
     }
   }
 
+  function handleClear() {
+    setQuery('')
+  }
+
   return (
-    <form className="search-form" onSubmit={handleSubmit}>
-      <input
-        type="search"
-        placeholder="Поиск по wiki..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        aria-label="Поиск"
-      />
-      <button type="submit">Найти</button>
+    <form className={`search-form ${styles.form}`} onSubmit={handleSubmit}>
+      <div className={styles.field}>
+        <input
+          type="text"
+          placeholder="Поиск по wiki..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Поиск"
+          className={styles.input}
+        />
+        {query.length > 0 && (
+          <button
+            type="button"
+            className={styles.clear}
+            onClick={handleClear}
+            aria-label="Очистить поиск"
+          >
+            <X size={16} strokeWidth={2} />
+          </button>
+        )}
+      </div>
+      <button type="submit" className={styles.submit}>Найти</button>
     </form>
   )
 }

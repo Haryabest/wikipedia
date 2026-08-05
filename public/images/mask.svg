@@ -7,5 +7,5 @@
   </defs>
   <rect width="1280" height="720" fill="url(#g)"/>
   <ellipse cx="640" cy="300" rx="120" ry="140" fill="rgba(255,255,255,0.2)"/>
-  <text x="640" y="520" text-anchor="middle" fill="#fff" font-family="Georgia, serif" font-size="48" font-weight="600">@B5D0:B</text>
+  <text x="640" y="520" text-anchor="middle" fill="#fff" font-family="Georgia, serif" font-size="48" font-weight="600">Артефакт</text>
 </svg>

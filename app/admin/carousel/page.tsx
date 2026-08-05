@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useEffect, useState } from 'react'
+import { useAdminModal } from '@/components/admin/AdminModalProvider'
 
 interface Article {
   id: string
@@ -19,6 +20,7 @@ interface Slide {
 }
 
 export default function AdminCarouselPage() {
+  const modal = useAdminModal()
   const [slides, setSlides] = useState<Slide[]>([])
   const [articles, setArticles] = useState<Article[]>([])
   const [imageUrl, setImageUrl] = useState('')
@@ -58,7 +60,7 @@ export default function AdminCarouselPage() {
     })
     if (!res.ok) {
       const data = await res.json()
-      alert(data.error ?? 'Ошибка')
+      await modal.alert(data.error ?? 'Ошибка', 'Ошибка')
       return
     }
     setImageUrl('')
@@ -77,7 +79,8 @@ export default function AdminCarouselPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Удалить слайд?')) return
+    const ok = await modal.confirm('Удалить слайд?')
+    if (!ok) return
     await fetch(`/api/carousel/${id}`, { method: 'DELETE' })
     load()
   }

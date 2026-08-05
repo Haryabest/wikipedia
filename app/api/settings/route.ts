@@ -3,11 +3,18 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
 
+const socialLinkSchema = z.object({
+  imageUrl: z.string(),
+  url: z.string(),
+  label: z.string().optional(),
+})
+
 const settingsSchema = z.object({
   siteName: z.string().optional(),
   logoUrl: z.string().optional().nullable(),
   emblemUrl: z.string().optional().nullable(),
   siteUrl: z.string().optional(),
+  socialLinks: z.array(socialLinkSchema).optional(),
 })
 
 export async function GET() {

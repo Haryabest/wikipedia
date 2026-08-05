@@ -2,13 +2,13 @@
 
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Underline from '@tiptap/extension-underline'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
 import Placeholder from '@tiptap/extension-placeholder'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { ResizableImage, IMAGE_WIDTH_PRESETS } from '@/lib/tiptap-resizable-image'
 import styles from './RichTextEditor.module.css'
 
 interface RichTextEditorProps {
@@ -24,6 +24,8 @@ export function RichTextEditor({
   onUploadImage,
   placeholder = 'Начните писать статью...',
 }: RichTextEditorProps) {
+  const [imageActive, setImageActive] = useState(false)
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -31,12 +33,15 @@ export function RichTextEditor({
       Underline,
       TextStyle,
       Color,
-      Image.configure({ inline: false, allowBase64: false }),
+      ResizableImage.configure({ inline: false, allowBase64: false }),
       Link.configure({ openOnClick: false, HTMLAttributes: { class: 'wiki-link' } }),
       Placeholder.configure({ placeholder }),
     ],
     content,
     onUpdate: ({ editor: e }) => onChange(e.getHTML()),
+    onSelectionUpdate: ({ editor: e }) => {
+      setImageActive(e.isActive('image'))
+    },
     editorProps: {
       attributes: { class: styles.editorContent },
     },
@@ -57,10 +62,15 @@ export function RichTextEditor({
       const file = input.files?.[0]
       if (!file) return
       const url = await onUploadImage(file)
-      editor.chain().focus().setImage({ src: url }).run()
+      editor.chain().focus().setImage({ src: url, width: '100%' }).run()
     }
     input.click()
   }, [editor, onUploadImage])
+
+  const setImageWidth = useCallback((width: string) => {
+    if (!editor) return
+    editor.chain().focus().updateAttributes('image', { width }).run()
+  }, [editor])
 
   const addWikiLink = useCallback(() => {
     if (!editor) return
@@ -95,6 +105,23 @@ export function RichTextEditor({
         <button type="button" onClick={setColor} title="Цвет текста">A</button>
         <button type="button" onClick={addWikiLink} title="Wiki-ссылка">[[ ]]</button>
         {onUploadImage && <button type="button" onClick={addImage} title="Вставить изображение">🖼</button>}
+        {imageActive && (
+          <>
+            <span className={styles.sep} />
+            <span className={styles.resizeLabel}>Размер:</span>
+            {IMAGE_WIDTH_PRESETS.map((w) => (
+              <button
+                key={w}
+                type="button"
+                className={styles.resizeBtn}
+                onClick={() => setImageWidth(w)}
+                title={`Ширина ${w}`}
+              >
+                {w}
+              </button>
+            ))}
+          </>
+        )}
       </div>
       <EditorContent editor={editor} />
     </div>

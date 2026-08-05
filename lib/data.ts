@@ -8,6 +8,7 @@ export async function getSiteSettings() {
       logoUrl: null,
       emblemUrl: null,
       siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+      socialLinks: [],
     }
   )
 }

@@ -4,6 +4,9 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { RichTextEditor } from '@/components/RichTextEditor'
+import { AdminCheckbox } from '@/components/admin/AdminCheckbox'
+import { ImageUploadField } from '@/components/admin/ImageUploadField'
+import { useAdminModal } from '@/components/admin/AdminModalProvider'
 import { autoMetaDescription } from '@/lib/seo'
 import { isLegacyContent, parseSections } from '@/lib/wiki'
 import { validateForPublish, type FieldErrors, type PublishField } from '@/lib/article-validation'
@@ -52,6 +55,7 @@ function fieldClass(errors: FieldErrors, field: PublishField): string {
 
 export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
   const router = useRouter()
+  const modal = useAdminModal()
   const formRef = useRef<HTMLFormElement>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [title, setTitle] = useState(initial?.title ?? '')
@@ -173,7 +177,7 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
         router.push(`/admin/articles/${data.id}`)
       } else {
         router.refresh()
-        alert('Сохранено')
+        await modal.alert('Сохранено')
       }
     } else {
       if (data.fields && typeof data.fields === 'object') {
@@ -186,7 +190,9 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
   }
 
   async function handleDelete() {
-    if (!articleId || !confirm('Удалить статью?')) return
+    if (!articleId) return
+    const ok = await modal.confirm('Удалить статью?')
+    if (!ok) return
     await fetch(`/api/articles/${articleId}`, { method: 'DELETE' })
     router.push('/admin/articles')
   }
@@ -308,29 +314,13 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
               <h3 className={styles.infoboxTitle}>Инфобокс</h3>
               <p className="hint">Основное фото статьи — показывается в карточках категорий справа.</p>
 
-              <label>Фото *</label>
-              {infoboxImageUrl && (
-                <img src={infoboxImageUrl} alt="" className={styles.infoboxPreview} />
-              )}
-              <div className={styles.uploadRow}>
-                <input
-                  value={infoboxImageUrl}
-                  onChange={(e) => { setInfoboxImageUrl(e.target.value); clearFieldError('infoboxImageUrl') }}
-                  placeholder="URL или загрузите файл"
-                  className={fieldClass(errors, 'infoboxImageUrl')}
-                />
-                <label className="btn">
-                  Загрузить
-                  <input type="file" accept="image/*" hidden onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (file) {
-                      setInfoboxImageUrl(await uploadFile(file))
-                      clearFieldError('infoboxImageUrl')
-                    }
-                  }} />
-                </label>
-              </div>
-              {errors.infoboxImageUrl && <span className="field-error">{errors.infoboxImageUrl}</span>}
+              <ImageUploadField
+                label="Фото *"
+                value={infoboxImageUrl}
+                onChange={(url) => { setInfoboxImageUrl(url); clearFieldError('infoboxImageUrl') }}
+                onUpload={uploadFile}
+                error={errors.infoboxImageUrl}
+              />
 
               <label>Подпись к фото</label>
               <input value={infoboxCaption} onChange={(e) => setInfoboxCaption(e.target.value)} placeholder="Подпись под изображением" />
@@ -356,25 +346,25 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
               </button>
             </div>
 
-            <div className="admin-card admin-form">
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={published}
-                  onChange={(e) => {
-                    setPublished(e.target.checked)
-                    if (!e.target.checked) setErrors({})
-                  }}
-                />
-                Опубликовать
-              </label>
-              <p className="hint">При публикации обязательны: заголовок, описание, текст, категория и фото.</p>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.target.checked)} />
-                Скрыть с сайта
-              </label>
+            <div className="admin-card admin-card--compact admin-form">
+              <AdminCheckbox
+                id="published"
+                label="Опубликовать"
+                checked={published}
+                onChange={(checked) => {
+                  setPublished(checked)
+                  if (!checked) setErrors({})
+                }}
+                hint="При публикации обязательны: заголовок, описание, текст, категория и фото."
+              />
+              <AdminCheckbox
+                id="hidden"
+                label="Скрыть с сайта"
+                checked={hidden}
+                onChange={setHidden}
+              />
 
-              <div className="admin-actions" style={{ marginTop: 16 }}>
+              <div className="admin-actions">
                 <button type="submit" className="btn btn--primary" disabled={saving}>
                   {saving ? 'Сохранение...' : mode === 'create' ? 'Создать' : 'Сохранить'}
                 </button>

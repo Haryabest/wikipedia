@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { BackToHome } from '@/components/BackToHome'
 import { SiteHeader } from '@/components/SiteHeader'
 import { ArticleCard } from '@/components/ArticleCard'
 import { prisma } from '@/lib/prisma'
@@ -71,9 +72,12 @@ export default async function CategoryPage({ params }: Props) {
     <>
       <SiteHeader siteName={settings.siteName} logoUrl={settings.logoUrl} showSearch />
       <main className={`container ${styles.main}`}>
-        <Link href={category.parent ? `/category/${category.parent.slug}` : '/'} className={styles.back}>
-          ← {category.parent ? category.parent.name : 'На главную'}
-        </Link>
+        <BackToHome />
+        {category.parent && (
+          <Link href={`/category/${category.parent.slug}`} className={styles.back}>
+            ← {category.parent.name}
+          </Link>
+        )}
 
         <h1 className={styles.title}>{category.name}</h1>
 

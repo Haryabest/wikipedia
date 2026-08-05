@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { BackToHome } from '@/components/BackToHome'
 import { SiteHeader } from '@/components/SiteHeader'
 import { TableOfContents } from '@/components/TableOfContents'
 import { Infobox } from '@/components/Infobox'
@@ -87,6 +88,7 @@ export default async function WikiArticlePage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
       <SiteHeader siteName={settings.siteName} logoUrl={settings.logoUrl} />
       <main className={`container ${styles.main}`}>
+        <BackToHome />
         <div className={styles.layout}>
           <div className={styles.content}>
             <h1 className={styles.title}>{article.title}</h1>

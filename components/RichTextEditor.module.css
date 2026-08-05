@@ -68,8 +68,24 @@
 
 .editorContent img {
   max-width: 100%;
+  height: auto;
   border-radius: 6px;
   margin: 8px 0;
+  display: block;
+  cursor: pointer;
+}
+
+.resizeLabel {
+  font-size: 12px;
+  color: #888;
+  align-self: center;
+  padding: 0 4px;
+}
+
+.resizeBtn {
+  font-size: 11px !important;
+  min-width: auto !important;
+  padding: 4px 8px !important;
 }
 
 .editorContent ul,

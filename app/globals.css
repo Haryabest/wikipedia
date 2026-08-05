@@ -23,6 +23,7 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -102,38 +103,6 @@ h1, h2, h3, h4 {
   gap: 8px;
   flex: 1;
   max-width: 360px;
-}
-
-.search-form input {
-  flex: 1;
-  padding: 8px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-family: var(--font);
-  font-size: 14px;
-  background: var(--bg);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.search-form input:focus {
-  border-color: var(--accent);
-}
-
-.search-form button {
-  padding: 8px 16px;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: var(--radius);
-  font-family: var(--font);
-  font-size: 14px;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.search-form button:hover {
-  opacity: 0.9;
 }
 
 .card {
@@ -241,4 +210,31 @@ h1, h2, h3, h4 {
   body {
     font-size: 15px;
   }
+}
+
+/* Custom scrollbar — не сдвигает layout благодаря scrollbar-gutter: stable */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d4 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #b8b8b8;
+  background-clip: content-box;
 }

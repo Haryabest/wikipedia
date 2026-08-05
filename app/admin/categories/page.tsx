@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useEffect, useState } from 'react'
+import { useAdminModal } from '@/components/admin/AdminModalProvider'
 
 interface Category {
   id: string
@@ -14,6 +15,7 @@ interface Category {
 }
 
 export default function AdminCategoriesPage() {
+  const modal = useAdminModal()
   const [categories, setCategories] = useState<Category[]>([])
   const [name, setName] = useState('')
   const [imageUrl, setImageUrl] = useState('')
@@ -63,7 +65,8 @@ export default function AdminCategoriesPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Удалить категорию?')) return
+    const ok = await modal.confirm('Удалить категорию?')
+    if (!ok) return
     await fetch(`/api/categories/${id}`, { method: 'DELETE' })
     load()
   }

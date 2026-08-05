@@ -78,9 +78,10 @@ model CarouselSlide {
 }
 
 model SiteSettings {
-  id         String @id @default("default")
-  siteName   String @default("Wiki")
-  logoUrl    String?
-  emblemUrl  String?
-  siteUrl    String @default("http://localhost:3000")
+  id          String @id @default("default")
+  siteName    String @default("Wiki")
+  logoUrl     String?
+  emblemUrl   String?
+  siteUrl     String @default("http://localhost:3000")
+  socialLinks Json   @default("[]")
 }

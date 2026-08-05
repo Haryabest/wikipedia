@@ -21,11 +21,20 @@ async function main() {
 
   await prisma.siteSettings.upsert({
     where: { id: 'default' },
-    update: {},
+    update: {
+      socialLinks: [
+        { imageUrl: '/images/vk.svg', url: 'https://vk.com', label: 'VK' },
+        { imageUrl: '/images/telegram.svg', url: 'https://t.me', label: 'Telegram' },
+      ],
+    },
     create: {
       id: 'default',
       siteName: 'Wiki',
       siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+      socialLinks: [
+        { imageUrl: '/images/vk.svg', url: 'https://vk.com', label: 'VK' },
+        { imageUrl: '/images/telegram.svg', url: 'https://t.me', label: 'Telegram' },
+      ],
     },
   })
 

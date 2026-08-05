@@ -5,6 +5,8 @@ import { AlphabetIndex } from '@/components/AlphabetIndex'
 import { getCarouselSlides, getSiteSettings, getVisibleArticles, getVisibleCategories } from '@/lib/data'
 import { buildMetadata, buildWebsiteJsonLd } from '@/lib/seo'
 import type { Metadata } from 'next'
+import { SocialLinks } from '@/components/SocialLinks'
+import { parseSocialLinks } from '@/lib/social-links'
 import styles from './page.module.css'
 
 export const dynamic = 'force-dynamic'
@@ -40,6 +42,7 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }} />
       <SiteHeader siteName={settings.siteName} logoUrl={settings.logoUrl} showSearch />
       <main className="container">
+        <SocialLinks links={parseSocialLinks(settings.socialLinks)} />
         <div className={styles.hero}>
           <Carousel slides={slides} />
         </div>

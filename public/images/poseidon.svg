@@ -7,5 +7,5 @@
   </defs>
   <rect width="1280" height="720" fill="url(#g)"/>
   <path d="M400,400 Q640,280 880,400" stroke="rgba(255,255,255,0.3)" stroke-width="40" fill="none"/>
-  <text x="640" y="520" text-anchor="middle" fill="#fff" font-family="Georgia, serif" font-size="52" font-weight="600">>A594>=</text>
+  <text x="640" y="520" text-anchor="middle" fill="#fff" font-family="Georgia, serif" font-size="52" font-weight="600">Посейдон</text>
 </svg>

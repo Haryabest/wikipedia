@@ -1,3 +1,4 @@
+import { BackToHome } from '@/components/BackToHome'
 import { SiteHeader } from '@/components/SiteHeader'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
@@ -35,6 +36,7 @@ export default async function SearchPage({ searchParams }: Props) {
     <>
       <SiteHeader siteName={settings.siteName} logoUrl={settings.logoUrl} />
       <main className={`container ${styles.main}`}>
+        <BackToHome />
         <h1 className={styles.title}>Поиск</h1>
         {query ? (
           <>
