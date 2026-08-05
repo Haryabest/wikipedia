@@ -1,0 +1,70 @@
+.back {
+  display: inline-block;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  align-items: start;
+}
+
+.main {
+  min-width: 0;
+}
+
+.sidebar {
+  position: sticky;
+  top: 24px;
+}
+
+.infoboxPanel {
+  margin-bottom: 16px;
+}
+
+.infoboxTitle {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.infoboxPreview {
+  width: 100%;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.uploadRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.uploadRow input {
+  margin-bottom: 0 !important;
+  flex: 1;
+}
+
+.infoboxRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.infoboxRow input {
+  margin-bottom: 0 !important;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+}

@@ -1,0 +1,56 @@
+.infobox {
+  float: right;
+  width: 280px;
+  margin: 0 0 16px 24px;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+.figure {
+  margin: 0;
+}
+
+.image {
+  width: 100%;
+  display: block;
+}
+
+.caption {
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  font-weight: 600;
+  width: 40%;
+  color: var(--text);
+}
+
+.table td {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .infobox {
+    float: none;
+    width: 100%;
+    margin: 0 0 24px;
+  }
+}

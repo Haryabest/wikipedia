@@ -1,0 +1,35 @@
+.main {
+  padding: 32px 0 64px;
+  max-width: 720px;
+}
+
+.title {
+  font-size: 28px;
+  margin: 0 0 16px;
+}
+
+.info {
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.summary {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.empty {
+  color: var(--text-secondary);
+}
