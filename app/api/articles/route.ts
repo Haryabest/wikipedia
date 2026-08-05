@@ -5,6 +5,7 @@ import { getSession } from '@/lib/auth'
 import { createSlug, ensureUniqueSlug } from '@/lib/slug'
 import { stringifySections } from '@/lib/wiki'
 import { autoMetaDescription } from '@/lib/seo'
+import { validateForPublish } from '@/lib/article-validation'
 
 const infoboxRowSchema = z.object({
   label: z.string(),
@@ -44,6 +45,41 @@ async function requireAuth() {
   return session
 }
 
+async function validatePublishPayload(data: {
+  title: string
+  summary?: string | null
+  content: string
+  categoryId?: string | null
+  infoboxImageUrl?: string | null
+  published?: boolean
+}) {
+  if (!data.published) return null
+
+  const category = data.categoryId
+    ? await prisma.category.findUnique({ where: { id: data.categoryId }, select: { id: true, parentId: true } })
+    : null
+
+  const mainCategoryId = category?.parentId ?? category?.id ?? ''
+  const subcategoryId = category?.parentId ? category.id : ''
+
+  const hasSubcategories = mainCategoryId
+    ? (await prisma.category.count({ where: { parentId: mainCategoryId } })) > 0
+    : false
+
+  const errors = validateForPublish({
+    title: data.title,
+    summary: data.summary ?? '',
+    content: data.content,
+    mainCategoryId,
+    subcategoryId,
+    infoboxImageUrl: data.infoboxImageUrl ?? '',
+    hasSubcategories,
+  })
+
+  if (Object.keys(errors).length === 0) return null
+  return errors
+}
+
 export async function GET() {
   const session = await requireAuth()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -76,6 +112,23 @@ export async function POST(request: Request) {
 
   const data = parsed.data
   const content = normalizeContent(data.content)
+
+  const publishErrors = await validatePublishPayload({
+    title: data.title,
+    summary: data.summary,
+    content,
+    categoryId: data.categoryId,
+    infoboxImageUrl: data.infoboxImageUrl,
+    published: data.published,
+  })
+
+  if (publishErrors) {
+    return NextResponse.json(
+      { error: 'Заполните все обязательные поля для публикации', fields: publishErrors },
+      { status: 422 }
+    )
+  }
+
   const baseSlug = data.slug || createSlug(data.title)
   const slug = await ensureUniqueSlug(baseSlug, async (s) => {
     const existing = await prisma.article.findUnique({ where: { slug: s } })

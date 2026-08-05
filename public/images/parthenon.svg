@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e9c46a"/>
+      <stop offset="100%" stop-color="#f4a261"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#g)"/>
+  <polygon points="640,140 780,380 500,380" fill="rgba(255,255,255,0.25)"/>
+  <rect x="520" y="380" width="240" height="80" fill="rgba(255,255,255,0.15)"/>
+  <text x="640" y="540" text-anchor="middle" fill="#fff" font-family="Georgia, serif" font-size="52" font-weight="600">0@D5=>=</text>
+</svg>

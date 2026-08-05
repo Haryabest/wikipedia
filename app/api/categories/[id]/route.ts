@@ -8,6 +8,7 @@ const updateSchema = z.object({
   name: z.string().min(1).optional(),
   slug: z.string().optional(),
   imageUrl: z.string().optional().nullable(),
+  parentId: z.string().optional().nullable(),
   sortOrder: z.number().optional(),
   hidden: z.boolean().optional(),
 })

@@ -46,7 +46,7 @@ export default async function WikiArticlePage({ params }: Props) {
     prisma.article.findFirst({
       where: { slug, published: true, hidden: false },
       include: {
-        category: true,
+        category: { include: { parent: true } },
         infoboxRows: { orderBy: { sortOrder: 'asc' } },
       },
     }),
@@ -72,6 +72,9 @@ export default async function WikiArticlePage({ params }: Props) {
 
   const breadcrumbs = buildBreadcrumbJsonLd([
     { name: settings.siteName, url: settings.siteUrl },
+    ...(article.category?.parent
+      ? [{ name: article.category.parent.name, url: `${settings.siteUrl}/category/${article.category.parent.slug}` }]
+      : []),
     ...(article.category
       ? [{ name: article.category.name, url: `${settings.siteUrl}/category/${article.category.slug}` }]
       : []),
@@ -104,6 +107,14 @@ export default async function WikiArticlePage({ params }: Props) {
         {article.category && (
           <p className={styles.category}>
             Категория:{' '}
+            {article.category.parent && (
+              <>
+                <Link href={`/category/${article.category.parent.slug}`}>
+                  {article.category.parent.name}
+                </Link>
+                {' → '}
+              </>
+            )}
             <Link href={`/category/${article.category.slug}`}>{article.category.name}</Link>
           </p>
         )}

@@ -36,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru">
       <head>
+        <meta name="referrer" content="no-referrer" />
         <link rel="preconnect" href={siteUrl} />
       </head>
       <body>{children}</body>

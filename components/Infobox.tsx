@@ -1,3 +1,4 @@
+import { WikiImage } from './WikiImage'
 import styles from './Infobox.module.css'
 
 interface InfoboxRow {
@@ -18,7 +19,7 @@ export function Infobox({ imageUrl, caption, rows }: InfoboxProps) {
     <aside className={`card ${styles.infobox}`}>
       {imageUrl && (
         <figure className={styles.figure}>
-          <img src={imageUrl} alt={caption ?? ''} className={styles.image} />
+          <WikiImage src={imageUrl} alt={caption ?? ''} className={styles.image} />
           {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
         </figure>
       )}

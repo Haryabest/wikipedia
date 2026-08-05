@@ -1,4 +1,5 @@
 import { renderArticleHtml, extractHeadingsFromContent } from '@/lib/wiki'
+import { WikiImage } from './WikiImage'
 import styles from './ArticleContent.module.css'
 
 interface ArticleContentProps {
@@ -13,7 +14,7 @@ export function ArticleContent({ content, articleSlugs, emblemUrl }: ArticleCont
   return (
     <article className={styles.article}>
       {emblemUrl && (
-        <img src={emblemUrl} alt="" className={styles.emblem} />
+        <WikiImage src={emblemUrl} alt="" className={styles.emblem} />
       )}
       {html ? (
         <div

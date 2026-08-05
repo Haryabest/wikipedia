@@ -11,8 +11,8 @@
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   --radius: 8px;
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
-  --max-width: 1200px;
-  --content-width: 860px;
+  --max-width: 1320px;
+  --content-width: 1080px;
 }
 
 *,

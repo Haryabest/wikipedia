@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { SiteHeader } from '@/components/SiteHeader'
+import { ArticleCard } from '@/components/ArticleCard'
 import { prisma } from '@/lib/prisma'
 import { getSiteSettings } from '@/lib/data'
 import { buildMetadata } from '@/lib/seo'
@@ -35,10 +36,11 @@ export default async function CategoryPage({ params }: Props) {
     prisma.category.findFirst({
       where: { slug, hidden: false },
       include: {
-        articles: {
-          where: { published: true, hidden: false },
-          orderBy: { title: 'asc' },
-          select: { title: true, slug: true, summary: true },
+        parent: true,
+        children: {
+          where: { hidden: false },
+          orderBy: { sortOrder: 'asc' },
+          include: { _count: { select: { articles: { where: { published: true, hidden: false } } } } },
         },
       },
     }),
@@ -47,26 +49,69 @@ export default async function CategoryPage({ params }: Props) {
 
   if (!category) notFound()
 
+  const categoryIds = [category.id, ...category.children.map((c) => c.id)]
+
+  const articles = await prisma.article.findMany({
+    where: {
+      published: true,
+      hidden: false,
+      categoryId: { in: categoryIds },
+    },
+    orderBy: { title: 'asc' },
+    select: {
+      title: true,
+      slug: true,
+      summary: true,
+      infoboxImageUrl: true,
+      category: { select: { id: true, name: true, slug: true } },
+    },
+  })
+
   return (
     <>
       <SiteHeader siteName={settings.siteName} logoUrl={settings.logoUrl} showSearch />
       <main className={`container ${styles.main}`}>
-        <Link href="/" className={styles.back}>← На главную</Link>
+        <Link href={category.parent ? `/category/${category.parent.slug}` : '/'} className={styles.back}>
+          ← {category.parent ? category.parent.name : 'На главную'}
+        </Link>
+
         <h1 className={styles.title}>{category.name}</h1>
-        {category.articles.length === 0 ? (
-          <p className={styles.empty}>В этой категории пока нет статей.</p>
-        ) : (
-          <ul className={styles.list}>
-            {category.articles.map((a) => (
-              <li key={a.slug} className={styles.item}>
-                <Link href={`/wiki/${a.slug}`} className={styles.link}>
-                  <h2 className={styles.itemTitle}>{a.title}</h2>
-                  {a.summary && <p className={styles.itemSummary}>{a.summary}</p>}
+
+        {category.children.length > 0 && (
+          <section className={styles.subcategories}>
+            <h2 className={styles.sectionTitle}>Подкатегории</h2>
+            <div className={styles.subcategoryGrid}>
+              {category.children.map((sub) => (
+                <Link key={sub.id} href={`/category/${sub.slug}`} className={styles.subcategoryChip}>
+                  {sub.name}
+                  <span className={styles.subcategoryCount}>{sub._count.articles}</span>
                 </Link>
-              </li>
-            ))}
-          </ul>
+              ))}
+            </div>
+          </section>
         )}
+
+        <section>
+          <h2 className={styles.sectionTitle}>
+            Статьи {articles.length > 0 && <span className={styles.count}>({articles.length})</span>}
+          </h2>
+          {articles.length === 0 ? (
+            <p className={styles.empty}>В этой категории пока нет статей.</p>
+          ) : (
+            <div className={styles.list}>
+              {articles.map((a) => (
+                <ArticleCard
+                  key={a.slug}
+                  title={a.title}
+                  slug={a.slug}
+                  summary={a.summary}
+                  imageUrl={a.infoboxImageUrl}
+                  subcategory={a.category?.id !== category.id ? a.category?.name : null}
+                />
+              ))}
+            </div>
+          )}
+        </section>
       </main>
     </>
   )

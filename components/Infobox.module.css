@@ -1,6 +1,6 @@
 .infobox {
   float: right;
-  width: 280px;
+  width: 300px;
   margin: 0 0 16px 24px;
   overflow: hidden;
   font-size: 14px;
@@ -12,7 +12,9 @@
 
 .image {
   width: 100%;
+  max-height: none;
   display: block;
+  object-fit: cover;
 }
 
 .caption {

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { WikiImage } from './WikiImage'
 import styles from './Carousel.module.css'
 
 interface Slide {
@@ -44,7 +46,7 @@ export function Carousel({ slides, intervalMs = 7000 }: CarouselProps) {
   const slide = slides[index]
 
   const image = (
-    <img src={slide.imageUrl} alt={slide.caption ?? ''} className={styles.image} />
+    <WikiImage src={slide.imageUrl} alt={slide.caption ?? ''} className={styles.image} />
   )
 
   return (
@@ -55,11 +57,11 @@ export function Carousel({ slides, intervalMs = 7000 }: CarouselProps) {
       </div>
       {slides.length > 1 && (
         <>
-          <button type="button" className={styles.navPrev} onClick={prev} aria-label="Предыдущий">
-            ‹
+          <button type="button" className={styles.navBtn} onClick={prev} aria-label="Предыдущий слайд">
+            <ChevronLeft size={22} strokeWidth={2} />
           </button>
-          <button type="button" className={styles.navNext} onClick={next} aria-label="Следующий">
-            ›
+          <button type="button" className={`${styles.navBtn} ${styles.navNext}`} onClick={next} aria-label="Следующий слайд">
+            <ChevronRight size={22} strokeWidth={2} />
           </button>
           <div className={styles.dots}>
             {slides.map((s, i) => (

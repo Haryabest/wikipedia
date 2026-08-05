@@ -1,16 +1,19 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { RichTextEditor } from '@/components/RichTextEditor'
 import { autoMetaDescription } from '@/lib/seo'
 import { isLegacyContent, parseSections } from '@/lib/wiki'
+import { validateForPublish, type FieldErrors, type PublishField } from '@/lib/article-validation'
 import styles from './ArticleForm.module.css'
 
 interface Category {
   id: string
   name: string
+  parentId?: string | null
+  parent?: { name: string } | null
 }
 
 interface InfoboxRow {
@@ -43,15 +46,21 @@ function legacyToHtml(content: string): string {
     .join('')
 }
 
+function fieldClass(errors: FieldErrors, field: PublishField): string {
+  return errors[field] ? 'input-error' : ''
+}
+
 export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
   const router = useRouter()
+  const formRef = useRef<HTMLFormElement>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [title, setTitle] = useState(initial?.title ?? '')
   const [slug, setSlug] = useState(initial?.slug ?? '')
   const [summary, setSummary] = useState(initial?.summary ?? '')
   const [metaDescription, setMetaDescription] = useState(initial?.metaDescription ?? '')
   const [metaTouched, setMetaTouched] = useState(!!initial?.metaDescription)
-  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '')
+  const [mainCategoryId, setMainCategoryId] = useState('')
+  const [subcategoryId, setSubcategoryId] = useState('')
   const [infoboxImageUrl, setInfoboxImageUrl] = useState(initial?.infoboxImageUrl ?? '')
   const [infoboxCaption, setInfoboxCaption] = useState(initial?.infoboxCaption ?? '')
   const [infoboxRows, setInfoboxRows] = useState<InfoboxRow[]>(initial?.infoboxRows ?? [])
@@ -59,10 +68,28 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
   const [published, setPublished] = useState(initial?.published ?? false)
   const [hidden, setHidden] = useState(initial?.hidden ?? false)
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<FieldErrors>({})
+  const [submitError, setSubmitError] = useState('')
+
+  const hasSubcategories = useMemo(
+    () => categories.some((c) => c.parentId === mainCategoryId),
+    [categories, mainCategoryId]
+  )
 
   useEffect(() => {
-    fetch('/api/categories').then((r) => r.json()).then(setCategories)
-  }, [])
+    fetch('/api/categories').then((r) => r.json()).then((cats: Category[]) => {
+      setCategories(cats)
+      if (initial?.categoryId) {
+        const selected = cats.find((c) => c.id === initial.categoryId)
+        if (selected?.parentId) {
+          setMainCategoryId(selected.parentId)
+          setSubcategoryId(selected.id)
+        } else if (selected) {
+          setMainCategoryId(selected.id)
+        }
+      }
+    })
+  }, [initial?.categoryId])
 
   const computedMeta = useMemo(
     () => autoMetaDescription(summary, content, title),
@@ -70,6 +97,28 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
   )
 
   const displayMeta = metaTouched ? metaDescription : computedMeta
+
+  function clearFieldError(field: PublishField) {
+    setErrors((prev) => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }
+
+  function runValidation(wantPublish: boolean): FieldErrors {
+    if (!wantPublish) return {}
+    return validateForPublish({
+      title,
+      summary,
+      content,
+      mainCategoryId,
+      subcategoryId,
+      infoboxImageUrl,
+      hasSubcategories,
+    })
+  }
 
   async function uploadFile(file: File): Promise<string> {
     const fd = new FormData()
@@ -82,6 +131,16 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    setSubmitError('')
+
+    const validationErrors = runValidation(published)
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+
+    setErrors({})
     setSaving(true)
 
     const payload = {
@@ -89,7 +148,7 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
       slug: slug || undefined,
       summary,
       metaDescription: displayMeta || computedMeta,
-      categoryId: categoryId || null,
+      categoryId: subcategoryId || mainCategoryId || null,
       infoboxImageUrl: infoboxImageUrl || null,
       infoboxCaption,
       content,
@@ -107,15 +166,22 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
       }
     )
 
+    const data = await res.json().catch(() => ({}))
+
     if (res.ok) {
-      const article = await res.json()
       if (mode === 'create') {
-        router.push(`/admin/articles/${article.id}`)
+        router.push(`/admin/articles/${data.id}`)
       } else {
         router.refresh()
         alert('Сохранено')
       }
+    } else {
+      if (data.fields && typeof data.fields === 'object') {
+        setErrors(data.fields as FieldErrors)
+      }
+      setSubmitError(typeof data.error === 'string' ? data.error : 'Не удалось сохранить статью')
     }
+
     setSaving(false)
   }
 
@@ -125,6 +191,8 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
     router.push('/admin/articles')
   }
 
+  const errorList = Object.values(errors)
+
   return (
     <div>
       <Link href="/admin/articles" className={styles.back}>← Назад к списку</Link>
@@ -132,63 +200,137 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
         {mode === 'create' ? 'Новая статья' : `Редактирование: ${title}`}
       </h1>
 
-      <form onSubmit={handleSubmit}>
+      {errorList.length > 0 && (
+        <div className="form-alert" role="alert">
+          <strong>Статья не может быть опубликована</strong>
+          <ul>
+            {errorList.map((msg) => (
+              <li key={msg}>{msg}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {submitError && (
+        <div className="form-alert" role="alert">{submitError}</div>
+      )}
+
+      <form ref={formRef} onSubmit={handleSubmit}>
         <div className={styles.layout}>
           <div className={styles.main}>
             <div className="admin-card admin-form">
-              <label>Заголовок</label>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+              <label htmlFor="title">Заголовок *</label>
+              <input
+                id="title"
+                value={title}
+                onChange={(e) => { setTitle(e.target.value); clearFieldError('title') }}
+                className={fieldClass(errors, 'title')}
+              />
+              {errors.title && <span className="field-error">{errors.title}</span>}
 
               {mode === 'edit' && (
                 <>
-                  <label>URL (slug)</label>
-                  <input value={slug} onChange={(e) => setSlug(e.target.value)} />
+                  <label htmlFor="slug">URL (slug)</label>
+                  <input id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
                 </>
               )}
 
-              <label>Краткое описание</label>
-              <input value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="Отображается под заголовком" />
+              <label htmlFor="summary">Краткое описание *</label>
+              <input
+                id="summary"
+                value={summary}
+                onChange={(e) => { setSummary(e.target.value); clearFieldError('summary') }}
+                placeholder="Отображается под заголовком и в карточках категорий"
+                className={fieldClass(errors, 'summary')}
+              />
+              {errors.summary && <span className="field-error">{errors.summary}</span>}
 
-              <label>Meta description (SEO) — заполняется автоматически</label>
+              <label htmlFor="meta">Meta description (SEO) — заполняется автоматически</label>
               <textarea
+                id="meta"
                 value={displayMeta}
                 onChange={(e) => { setMetaDescription(e.target.value); setMetaTouched(true) }}
                 rows={2}
               />
               <p className="hint">Авто: {computedMeta.slice(0, 100)}…</p>
 
-              <label>Категория</label>
-              <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                <option value="">— Без категории —</option>
-                {categories.map((c) => (
+              <label htmlFor="category">Категория *</label>
+              <select
+                id="category"
+                value={mainCategoryId}
+                onChange={(e) => {
+                  setMainCategoryId(e.target.value)
+                  setSubcategoryId('')
+                  clearFieldError('mainCategoryId')
+                  clearFieldError('subcategoryId')
+                }}
+                className={fieldClass(errors, 'mainCategoryId')}
+              >
+                <option value="">— Выберите категорию —</option>
+                {categories.filter((c) => !c.parentId).map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
+              {errors.mainCategoryId && <span className="field-error">{errors.mainCategoryId}</span>}
 
-              <label>Текст статьи</label>
-              <RichTextEditor content={content} onChange={setContent} onUploadImage={uploadFile} />
+              {hasSubcategories && (
+                <>
+                  <label htmlFor="subcategory">Подкатегория *</label>
+                  <select
+                    id="subcategory"
+                    value={subcategoryId}
+                    onChange={(e) => { setSubcategoryId(e.target.value); clearFieldError('subcategoryId') }}
+                    className={fieldClass(errors, 'subcategoryId')}
+                  >
+                    <option value="">— Выберите подкатегорию —</option>
+                    {categories.filter((c) => c.parentId === mainCategoryId).map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  {errors.subcategoryId && <span className="field-error">{errors.subcategoryId}</span>}
+                </>
+              )}
+
+              <label>Текст статьи *</label>
+              <div className={`${styles.editorWrap} ${errors.content ? 'input-error' : ''}`} style={errors.content ? { border: '1px solid #dc2626', borderRadius: 8, boxShadow: '0 0 0 3px rgba(220,38,38,0.12)' } : undefined}>
+                <RichTextEditor
+                  content={content}
+                  onChange={(v) => { setContent(v); clearFieldError('content') }}
+                  onUploadImage={uploadFile}
+                />
+              </div>
+              {errors.content && <span className="field-error">{errors.content}</span>}
             </div>
           </div>
 
           <aside className={styles.sidebar}>
             <div className={`admin-card admin-form ${styles.infoboxPanel}`}>
               <h3 className={styles.infoboxTitle}>Инфобокс</h3>
-              <p className="hint">Боковая панель как в Wikipedia — фото, подпись и факты.</p>
+              <p className="hint">Основное фото статьи — показывается в карточках категорий справа.</p>
 
-              <label>Фото</label>
+              <label>Фото *</label>
               {infoboxImageUrl && (
                 <img src={infoboxImageUrl} alt="" className={styles.infoboxPreview} />
               )}
               <div className={styles.uploadRow}>
-                <input value={infoboxImageUrl} onChange={(e) => setInfoboxImageUrl(e.target.value)} placeholder="URL" />
+                <input
+                  value={infoboxImageUrl}
+                  onChange={(e) => { setInfoboxImageUrl(e.target.value); clearFieldError('infoboxImageUrl') }}
+                  placeholder="URL или загрузите файл"
+                  className={fieldClass(errors, 'infoboxImageUrl')}
+                />
                 <label className="btn">
                   Загрузить
                   <input type="file" accept="image/*" hidden onChange={async (e) => {
                     const file = e.target.files?.[0]
-                    if (file) setInfoboxImageUrl(await uploadFile(file))
+                    if (file) {
+                      setInfoboxImageUrl(await uploadFile(file))
+                      clearFieldError('infoboxImageUrl')
+                    }
                   }} />
                 </label>
               </div>
+              {errors.infoboxImageUrl && <span className="field-error">{errors.infoboxImageUrl}</span>}
 
               <label>Подпись к фото</label>
               <input value={infoboxCaption} onChange={(e) => setInfoboxCaption(e.target.value)} placeholder="Подпись под изображением" />
@@ -216,9 +358,17 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
 
             <div className="admin-card admin-form">
               <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={published}
+                  onChange={(e) => {
+                    setPublished(e.target.checked)
+                    if (!e.target.checked) setErrors({})
+                  }}
+                />
                 Опубликовать
               </label>
+              <p className="hint">При публикации обязательны: заголовок, описание, текст, категория и фото.</p>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.target.checked)} />
                 Скрыть с сайта

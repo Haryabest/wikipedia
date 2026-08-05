@@ -8,6 +8,7 @@ const categorySchema = z.object({
   name: z.string().min(1),
   slug: z.string().optional(),
   imageUrl: z.string().optional().nullable(),
+  parentId: z.string().optional().nullable(),
   sortOrder: z.number().optional(),
   hidden: z.boolean().optional(),
 })
@@ -17,8 +18,11 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const categories = await prisma.category.findMany({
-    orderBy: { sortOrder: 'asc' },
-    include: { _count: { select: { articles: true } } },
+    orderBy: [{ parentId: 'asc' }, { sortOrder: 'asc' }],
+    include: {
+      parent: { select: { name: true } },
+      _count: { select: { articles: true, children: true } },
+    },
   })
   return NextResponse.json(categories)
 }

@@ -5,6 +5,7 @@ import { getSession } from '@/lib/auth'
 import { createSlug, ensureUniqueSlug } from '@/lib/slug'
 import { stringifySections } from '@/lib/wiki'
 import { autoMetaDescription } from '@/lib/seo'
+import { validateForPublish } from '@/lib/article-validation'
 
 const sectionSchema = z.object({
   id: z.string(),
@@ -34,6 +35,41 @@ function normalizeContent(content: string | z.infer<typeof sectionSchema>[] | un
   if (content === undefined) return undefined
   if (typeof content === 'string') return content
   return stringifySections(content)
+}
+
+async function validatePublishPayload(data: {
+  title: string
+  summary?: string | null
+  content: string
+  categoryId?: string | null
+  infoboxImageUrl?: string | null
+  published?: boolean
+}) {
+  if (!data.published) return null
+
+  const category = data.categoryId
+    ? await prisma.category.findUnique({ where: { id: data.categoryId }, select: { id: true, parentId: true } })
+    : null
+
+  const mainCategoryId = category?.parentId ?? category?.id ?? ''
+  const subcategoryId = category?.parentId ? category.id : ''
+
+  const hasSubcategories = mainCategoryId
+    ? (await prisma.category.count({ where: { parentId: mainCategoryId } })) > 0
+    : false
+
+  const errors = validateForPublish({
+    title: data.title,
+    summary: data.summary ?? '',
+    content: data.content,
+    mainCategoryId,
+    subcategoryId,
+    infoboxImageUrl: data.infoboxImageUrl ?? '',
+    hasSubcategories,
+  })
+
+  if (Object.keys(errors).length === 0) return null
+  return errors
 }
 
 interface RouteContext {
@@ -87,7 +123,23 @@ export async function PUT(request: Request, context: RouteContext) {
     })
   }
 
-  const content = normalizeContent(data.content)
+  const content = normalizeContent(data.content) ?? existing.content
+
+  const publishErrors = await validatePublishPayload({
+    title: data.title ?? existing.title,
+    summary: data.summary ?? existing.summary,
+    content,
+    categoryId: data.categoryId !== undefined ? data.categoryId : existing.categoryId,
+    infoboxImageUrl: data.infoboxImageUrl !== undefined ? data.infoboxImageUrl : existing.infoboxImageUrl,
+    published: data.published !== undefined ? data.published : existing.published,
+  })
+
+  if (publishErrors) {
+    return NextResponse.json(
+      { error: 'Заполните все обязательные поля для публикации', fields: publishErrors },
+      { status: 422 }
+    )
+  }
 
   if (data.infoboxRows) {
     await prisma.infoboxRow.deleteMany({ where: { articleId: id } })

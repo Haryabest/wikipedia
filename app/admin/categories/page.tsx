@@ -1,7 +1,6 @@
 'use client'
 
 import { FormEvent, useEffect, useState } from 'react'
-import Link from 'next/link'
 
 interface Category {
   id: string
@@ -9,13 +8,16 @@ interface Category {
   slug: string
   imageUrl?: string | null
   hidden: boolean
-  _count?: { articles: number }
+  parentId?: string | null
+  parent?: { name: string } | null
+  _count?: { articles: number; children: number }
 }
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [name, setName] = useState('')
   const [imageUrl, setImageUrl] = useState('')
+  const [parentId, setParentId] = useState('')
 
   async function load() {
     const res = await fetch('/api/categories')
@@ -39,10 +41,15 @@ export default function AdminCategoriesPage() {
     await fetch('/api/categories', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, imageUrl: imageUrl || null }),
+      body: JSON.stringify({
+        name,
+        imageUrl: imageUrl || null,
+        parentId: parentId || null,
+      }),
     })
     setName('')
     setImageUrl('')
+    setParentId('')
     load()
   }
 
@@ -61,6 +68,8 @@ export default function AdminCategoriesPage() {
     load()
   }
 
+  const mainCategories = categories.filter((c) => !c.parentId)
+
   return (
     <div>
       <h1 className="admin-page-title">Категории</h1>
@@ -69,27 +78,40 @@ export default function AdminCategoriesPage() {
         <h3>Новая категория</h3>
         <label>Название</label>
         <input value={name} onChange={(e) => setName(e.target.value)} required />
+        <label>Родительская категория (для подкатегории)</label>
+        <select value={parentId} onChange={(e) => setParentId(e.target.value)}>
+          <option value="">— Основная категория —</option>
+          {mainCategories.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
         <label>Картинка</label>
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} style={{ marginBottom: 0, flex: 1 }} />
-          <input type="file" accept="image/*" onChange={async (e) => {
-            const file = e.target.files?.[0]
-            if (file) setImageUrl(await uploadFile(file))
-          }} />
+          <label className="btn">
+            Загрузить
+            <input type="file" accept="image/*" hidden onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (file) setImageUrl(await uploadFile(file))
+            }} />
+          </label>
         </div>
-        <button type="submit" className="btn btn--primary">Добавить</button>
+        <button type="submit" className="btn btn--primary">
+          {parentId ? 'Добавить подкатегорию' : 'Добавить категорию'}
+        </button>
       </form>
 
       <div className="admin-card">
         <table className="admin-table">
           <thead>
-            <tr><th>Название</th><th>URL</th><th>Статей</th><th>Статус</th><th></th></tr>
+            <tr><th>Название</th><th>URL</th><th>Тип</th><th>Статей</th><th>Статус</th><th></th></tr>
           </thead>
           <tbody>
             {categories.map((c) => (
               <tr key={c.id}>
-                <td>{c.name}</td>
+                <td>{c.parent ? `↳ ${c.name}` : c.name}</td>
                 <td><code>/category/{c.slug}</code></td>
+                <td>{c.parent ? `Подкат. «${c.parent.name}»` : 'Основная'}</td>
                 <td>{c._count?.articles ?? 0}</td>
                 <td>{c.hidden ? <span className="badge badge--red">Скрыта</span> : <span className="badge badge--green">Видна</span>}</td>
                 <td>

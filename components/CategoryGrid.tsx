@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { WikiImage } from './WikiImage'
 import styles from './CategoryGrid.module.css'
 
 interface Category {
@@ -33,7 +34,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
         <Link key={cat.id} href={`/category/${cat.slug}`} className={styles.card}>
           <div className={styles.imageWrap}>
             {cat.imageUrl ? (
-              <img src={cat.imageUrl} alt={cat.name} className={styles.image} loading="lazy" />
+              <WikiImage src={cat.imageUrl} alt={cat.name} className={styles.image} loading="lazy" />
             ) : (
               <div className={styles.placeholder} aria-hidden>{cat.name[0]}</div>
             )}

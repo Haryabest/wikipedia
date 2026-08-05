@@ -21,11 +21,38 @@ export async function getArticleSlugMap(): Promise<Map<string, string>> {
 }
 
 export async function getVisibleCategories() {
-  return prisma.category.findMany({
-    where: { hidden: false },
+  const parents = await prisma.category.findMany({
+    where: { hidden: false, parentId: null },
     orderBy: { sortOrder: 'asc' },
-    include: { _count: { select: { articles: { where: { published: true, hidden: false } } } } },
+    include: {
+      children: {
+        where: { hidden: false },
+        select: { id: true },
+      },
+    },
   })
+
+  return Promise.all(
+    parents.map(async (cat) => {
+      const childIds = cat.children.map((c) => c.id)
+      const articlesCount = await prisma.article.count({
+        where: {
+          published: true,
+          hidden: false,
+          categoryId: { in: [cat.id, ...childIds] },
+        },
+      })
+      return {
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        imageUrl: cat.imageUrl,
+        sortOrder: cat.sortOrder,
+        hidden: cat.hidden,
+        _count: { articles: articlesCount },
+      }
+    })
+  )
 }
 
 export async function getVisibleArticles() {
