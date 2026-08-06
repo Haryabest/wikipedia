@@ -1,0 +1,61 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border, #e8e8e8);
+  box-sizing: border-box;
+}
+
+.sm {
+  width: 32px;
+  height: 32px;
+}
+
+.md {
+  width: 40px;
+  height: 40px;
+}
+
+.lg {
+  width: 44px;
+  height: 44px;
+}
+
+.logo {
+  width: 58%;
+  height: 58%;
+  display: block;
+}
+
+.custom {
+  background: var(--surface, #fff);
+}
+
+.customImage {
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+  display: block;
+}
+
+.placeholder {
+  background: var(--accent-soft, #f5ebe6);
+  color: var(--accent, #d97757);
+}
+
+.initial {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sm .initial {
+  font-size: 12px;
+}
+
+.lg .initial {
+  font-size: 15px;
+}

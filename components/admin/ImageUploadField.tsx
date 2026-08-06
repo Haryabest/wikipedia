@@ -1,5 +1,7 @@
 'use client'
 
+import { AdminIcon } from '@/components/admin/AdminIcon'
+
 interface ImageUploadFieldProps {
   label: string
   value: string
@@ -36,6 +38,7 @@ export function ImageUploadField({
             className={error ? 'input-error' : ''}
           />
           <label className="btn admin-upload-btn">
+            <AdminIcon name="upload" />
             Загрузить
             <input
               type="file"
@@ -43,7 +46,13 @@ export function ImageUploadField({
               hidden
               onChange={async (e) => {
                 const file = e.target.files?.[0]
-                if (file) onChange(await onUpload(file))
+                e.target.value = ''
+                if (!file) return
+                try {
+                  onChange(await onUpload(file))
+                } catch (err: unknown) {
+                  window.alert(err instanceof Error ? err.message : 'Не удалось загрузить изображение')
+                }
               }}
             />
           </label>

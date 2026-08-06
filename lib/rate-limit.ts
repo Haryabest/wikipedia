@@ -1,11 +1,19 @@
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
+function cleanupExpired(now: number) {
+  if (rateLimitMap.size < 1000) return
+  for (const [key, entry] of rateLimitMap) {
+    if (now > entry.resetAt) rateLimitMap.delete(key)
+  }
+}
+
 export function rateLimit(
   key: string,
   limit = 60,
   windowMs = 60_000
 ): { allowed: boolean; remaining: number } {
   const now = Date.now()
+  cleanupExpired(now)
   const entry = rateLimitMap.get(key)
 
   if (!entry || now > entry.resetAt) {
@@ -23,8 +31,8 @@ export function rateLimit(
 
 export function getClientIp(request: Request): string {
   return (
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     request.headers.get('x-real-ip') ??
+    request.headers.get('x-forwarded-for')?.split(',').at(-1)?.trim() ??
     'unknown'
   )
 }

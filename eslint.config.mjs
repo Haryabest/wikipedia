@@ -10,6 +10,10 @@ const compat = new FlatCompat({ baseDirectory: __dirname })
 const eslintConfig = [...compat.extends('next/core-web-vitals')]
 
 eslintConfig.push({
+  ignores: ['.next/**', 'node_modules/**', 'out/**'],
+})
+
+eslintConfig.push({
   rules: {
     'react-hooks/set-state-in-effect': 'off',
     '@next/next/no-img-element': 'off',

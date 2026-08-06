@@ -21,6 +21,9 @@ export async function PUT(request: Request, context: RouteContext) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await context.params
+  const existing = await prisma.carouselSlide.findUnique({ where: { id }, select: { id: true } })
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
   let body: unknown
   try {
     body = await request.json()
@@ -36,7 +39,8 @@ export async function PUT(request: Request, context: RouteContext) {
   let linkUrl = parsed.data.linkUrl
   if (parsed.data.articleId) {
     const article = await prisma.article.findUnique({ where: { id: parsed.data.articleId } })
-    if (article) linkUrl = `/wiki/${article.slug}`
+    if (!article) return NextResponse.json({ error: 'Статья не найдена' }, { status: 400 })
+    linkUrl = `/wiki/${article.slug}`
   }
 
   const slide = await prisma.carouselSlide.update({
@@ -51,6 +55,9 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await context.params
+  const existing = await prisma.carouselSlide.findUnique({ where: { id }, select: { id: true } })
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
   await prisma.carouselSlide.delete({ where: { id } })
   return NextResponse.json({ ok: true })
 }

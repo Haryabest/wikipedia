@@ -1,16 +1,12 @@
 import Link from 'next/link'
+import { SiteHeaderWithSettings } from '@/components/SiteHeaderWithSettings'
 import styles from './not-found.module.css'
 
 export default function NotFound() {
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Wiki'
-
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <Link href="/" className={styles.logo}>{siteName}</Link>
-        <Link href="/search" className={styles.searchLink}>Поиск</Link>
-      </header>
-      <div className={styles.main}>
+    <>
+      <SiteHeaderWithSettings showSearch />
+      <main className={styles.main}>
         <div className={styles.content}>
           <div className={styles.code} aria-hidden>404</div>
           <h1 className={styles.title}>Страница не найдена</h1>
@@ -23,7 +19,7 @@ export default function NotFound() {
             <Link href="/search" className="btn">Поиск по wiki</Link>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   )
 }

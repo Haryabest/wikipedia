@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 export function AdminLogout() {
   const router = useRouter()
@@ -13,9 +14,9 @@ export function AdminLogout() {
 
   return (
     <div className="admin-logout">
-      <button type="button" className="btn" onClick={handleLogout}>
+      <AdminButton type="button" icon="logout" onClick={handleLogout}>
         Выйти
-      </button>
+      </AdminButton>
     </div>
   )
 }

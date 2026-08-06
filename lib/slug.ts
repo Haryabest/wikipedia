@@ -15,11 +15,12 @@ export async function ensureUniqueSlug(
   baseSlug: string,
   isTaken: (slug: string) => Promise<boolean>
 ): Promise<string> {
-  let slug = baseSlug || 'article'
+  const base = baseSlug || 'article'
+  let slug = base
   let counter = 1
 
   while (await isTaken(slug)) {
-    slug = `${baseSlug}-${counter}`
+    slug = `${base}-${counter}`
     counter++
   }
 

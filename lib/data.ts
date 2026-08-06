@@ -1,17 +1,20 @@
+import { cache } from 'react'
 import { prisma } from '@/lib/prisma'
 
-export async function getSiteSettings() {
-  return (
-    (await prisma.siteSettings.findUnique({ where: { id: 'default' } })) ?? {
-      id: 'default',
-      siteName: process.env.NEXT_PUBLIC_SITE_NAME ?? 'Wiki',
-      logoUrl: null,
-      emblemUrl: null,
-      siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
-      socialLinks: [],
-    }
-  )
+export function getDefaultSiteSettings() {
+  return {
+    id: 'default',
+    siteName: process.env.NEXT_PUBLIC_SITE_NAME ?? 'Wiki',
+    logoUrl: null,
+    emblemUrl: null,
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+    socialLinks: [],
+  }
 }
+
+export const getSiteSettings = cache(async function getSiteSettings() {
+  return (await prisma.siteSettings.findUnique({ where: { id: 'default' } })) ?? getDefaultSiteSettings()
+})
 
 export async function getArticleSlugMap(): Promise<Map<string, string>> {
   const articles = await prisma.article.findMany({

@@ -35,6 +35,10 @@ export function Carousel({ slides, intervalMs = 7000 }: CarouselProps) {
     return () => clearInterval(timer)
   }, [next, intervalMs, slides.length])
 
+  useEffect(() => {
+    if (index >= slides.length && slides.length > 0) setIndex(0)
+  }, [index, slides.length])
+
   if (slides.length === 0) {
     return (
       <div className={`card ${styles.carousel}`}>
@@ -43,7 +47,7 @@ export function Carousel({ slides, intervalMs = 7000 }: CarouselProps) {
     )
   }
 
-  const slide = slides[index]
+  const slide = slides[index % slides.length]
 
   const image = (
     <WikiImage src={slide.imageUrl} alt={slide.caption ?? ''} className={styles.image} />

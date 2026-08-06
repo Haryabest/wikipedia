@@ -1,0 +1,52 @@
+.main {
+  padding: 32px 0 64px;
+}
+
+.article {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 32px;
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.updated {
+  margin: 0 0 32px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.section {
+  margin-bottom: 28px;
+}
+
+.section h2 {
+  font-size: 20px;
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
+.section p,
+.section li {
+  margin: 0 0 12px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.section ul {
+  margin: 0 0 12px;
+  padding-left: 1.4em;
+}
+
+.section a {
+  color: var(--link);
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 26px;
+  }
+}

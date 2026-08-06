@@ -1,76 +1,82 @@
 .card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: stretch;
   overflow: hidden;
+  min-height: 156px;
   text-decoration: none;
   color: inherit;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
 .card:hover {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  border-color: rgba(217, 119, 87, 0.35);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
   text-decoration: none;
   color: inherit;
 }
 
-.media {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
-  background: #ececec;
-  flex-shrink: 0;
-}
-
-.image {
-  width: 100%;
-  height: 100%;
-  max-height: none;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-}
-
-.placeholder {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  font-size: 48px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
 .body {
   flex: 1;
-  padding: 18px 20px 20px;
+  min-width: 0;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.subcategory {
-  font-size: 11px;
-  font-weight: 600;
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.type {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
   color: var(--accent);
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.subcategory {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.subcategory::before {
+  content: '·';
+  margin-right: 8px;
+  color: var(--border);
 }
 
 .title {
   margin: 0;
-  font-size: 18px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color 0.2s ease;
+}
+
+.card:hover .title {
+  color: var(--accent);
 }
 
 .summary {
@@ -78,9 +84,8 @@
   font-size: 14px;
   line-height: 1.55;
   color: var(--text-secondary);
-  flex: 1;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -89,33 +94,90 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 4px;
-  padding-top: 12px;
+  margin-top: auto;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 
 .readMore {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--accent);
 }
 
 .arrow {
   font-size: 16px;
   color: var(--text-secondary);
-  transition: transform 0.2s;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .card:hover .arrow {
   color: var(--accent);
+  transform: translateX(4px);
 }
 
-@media (max-width: 640px) {
+.media {
+  width: 168px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #ececec;
+  border-left: 1px solid var(--border);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  min-height: 156px;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.45s ease;
+}
+
+.card:hover .image {
+  transform: scale(1.05);
+}
+
+.placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 156px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+}
+
+.placeholderLetter {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 48px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+@media (max-width: 768px) {
+  .card {
+    min-height: 140px;
+  }
+
   .body {
-    padding: 14px 16px 16px;
+    padding: 16px;
   }
 
   .title {
-    font-size: 17px;
+    font-size: 19px;
+  }
+
+  .media {
+    width: 112px;
+  }
+
+  .image,
+  .placeholder {
+    min-height: 140px;
+  }
+
+  .summary {
+    -webkit-line-clamp: 1;
   }
 }

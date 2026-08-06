@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
 
+export function toJsonLdScript(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, '\\u003c')
+}
+
 interface BuildMetadataOptions {
   title: string
   description: string

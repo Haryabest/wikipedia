@@ -10,6 +10,8 @@ const loginSchema = z.object({
   password: z.string().min(1),
 })
 
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync('dummy-password', 10)
+
 export async function POST(request: Request) {
   const ip = getClientIp(request)
   const { allowed } = rateLimit(`login:${ip}`, 10, 60_000)
@@ -29,8 +31,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Неверные данные' }, { status: 400 })
   }
 
-  const user = await prisma.user.findUnique({ where: { email: parsed.data.email } })
-  if (!user || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
+  const email = parsed.data.email.trim().toLowerCase()
+  const user = await prisma.user.findUnique({ where: { email } })
+  const passwordHash = user?.passwordHash ?? DUMMY_PASSWORD_HASH
+  if (!(await bcrypt.compare(parsed.data.password, passwordHash)) || !user) {
     return NextResponse.json({ error: 'Неверный email или пароль' }, { status: 401 })
   }
 

@@ -44,6 +44,12 @@ export async function POST(request: Request) {
   }
 
   const data = parsed.data
+  if (data.parentId) {
+    const parent = await prisma.category.findUnique({ where: { id: data.parentId }, select: { id: true, parentId: true } })
+    if (!parent) return NextResponse.json({ error: 'Родительская категория не найдена' }, { status: 400 })
+    if (parent.parentId) return NextResponse.json({ error: 'Подкатегорию нельзя создавать внутри подкатегории' }, { status: 400 })
+  }
+
   const baseSlug = data.slug || createSlug(data.name)
   const slug = await ensureUniqueSlug(baseSlug, async (s) => {
     return !!(await prisma.category.findUnique({ where: { slug: s } }))

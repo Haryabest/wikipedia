@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
@@ -130,33 +131,44 @@ export async function POST(request: Request) {
   }
 
   const baseSlug = data.slug || createSlug(data.title)
-  const slug = await ensureUniqueSlug(baseSlug, async (s) => {
-    const existing = await prisma.article.findUnique({ where: { slug: s } })
-    return !!existing
-  })
-
   const metaDescription =
     data.metaDescription ||
     autoMetaDescription(data.summary ?? '', content, data.title)
 
-  const article = await prisma.article.create({
-    data: {
-      title: data.title,
-      slug,
-      summary: data.summary,
-      metaDescription,
-      infoboxImageUrl: data.infoboxImageUrl,
-      infoboxCaption: data.infoboxCaption,
-      content,
-      categoryId: data.categoryId ?? null,
-      published: data.published ?? false,
-      hidden: data.hidden ?? false,
-      infoboxRows: data.infoboxRows?.length
-        ? { create: data.infoboxRows.filter((r) => r.label.trim()).map((r, i) => ({ ...r, sortOrder: r.sortOrder ?? i })) }
-        : undefined,
-    },
-    include: { infoboxRows: true },
-  })
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const slug = await ensureUniqueSlug(attempt === 0 ? baseSlug : `${baseSlug || 'article'}-${Date.now().toString(36)}`, async (s) => {
+      const existing = await prisma.article.findUnique({ where: { slug: s } })
+      return !!existing
+    })
 
-  return NextResponse.json(article, { status: 201 })
+    try {
+      const article = await prisma.article.create({
+        data: {
+          title: data.title,
+          slug,
+          summary: data.summary,
+          metaDescription,
+          infoboxImageUrl: data.infoboxImageUrl,
+          infoboxCaption: data.infoboxCaption,
+          content,
+          categoryId: data.categoryId ?? null,
+          published: data.published ?? false,
+          hidden: data.hidden ?? false,
+          infoboxRows: data.infoboxRows?.length
+            ? { create: data.infoboxRows.filter((r) => r.label.trim()).map((r, i) => ({ ...r, sortOrder: r.sortOrder ?? i })) }
+            : undefined,
+        },
+        include: { infoboxRows: true },
+      })
+      return NextResponse.json(article, { status: 201 })
+    } catch (err: unknown) {
+      const isUniqueSlugError =
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002' &&
+        String(err.meta?.target ?? '').includes('slug')
+      if (!isUniqueSlugError || attempt === 2) throw err
+    }
+  }
+
+  throw new Error('Не удалось создать уникальный slug')
 }

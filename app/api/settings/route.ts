@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
+import { getDefaultSiteSettings } from '@/lib/data'
 
 const socialLinkSchema = z.object({
   imageUrl: z.string(),
   url: z.string(),
   label: z.string().optional(),
+  iconFile: z.string().nullable().optional(),
 })
 
 const settingsSchema = z.object({
@@ -14,7 +16,7 @@ const settingsSchema = z.object({
   logoUrl: z.string().optional().nullable(),
   emblemUrl: z.string().optional().nullable(),
   siteUrl: z.string().optional(),
-  socialLinks: z.array(socialLinkSchema).optional(),
+  socialLinks: z.array(socialLinkSchema).max(10).optional(),
 })
 
 export async function GET() {
@@ -22,7 +24,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const settings = await prisma.siteSettings.findUnique({ where: { id: 'default' } })
-  return NextResponse.json(settings)
+  return NextResponse.json(settings ?? getDefaultSiteSettings())
 }
 
 export async function PUT(request: Request) {
@@ -41,10 +43,32 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
+  const data = { ...parsed.data }
+  if (data.siteName !== undefined) {
+    data.siteName = data.siteName.trim()
+    if (!data.siteName) delete data.siteName
+  }
+  if (data.siteUrl !== undefined) {
+    data.siteUrl = data.siteUrl.trim()
+    if (!data.siteUrl) {
+      delete data.siteUrl
+    } else {
+      try {
+        new URL(data.siteUrl)
+      } catch {
+        return NextResponse.json({ error: 'Некорректный URL сайта' }, { status: 400 })
+      }
+    }
+  }
+  for (const key of ['logoUrl', 'emblemUrl'] as const) {
+    const value = data[key]
+    if (typeof value === 'string' && !value.trim()) data[key] = null
+  }
+
   const settings = await prisma.siteSettings.upsert({
     where: { id: 'default' },
-    update: parsed.data,
-    create: { id: 'default', ...parsed.data },
+    update: data,
+    create: { ...getDefaultSiteSettings(), ...data, id: 'default' },
   })
   return NextResponse.json(settings)
 }

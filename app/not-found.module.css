@@ -1,34 +1,8 @@
-.page {
-  min-height: 100vh;
-  background: var(--bg, #fafafa);
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: var(--surface, #fff);
-  border-bottom: 1px solid var(--border, #e8e8e8);
-}
-
-.logo {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text, #1a1a1a);
-  text-decoration: none;
-}
-
-.searchLink {
-  font-size: 14px;
-  color: var(--link, #2563eb);
-}
-
 .main {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 65px);
+  min-height: calc(100vh - 73px);
   padding: 48px 24px;
 }
 

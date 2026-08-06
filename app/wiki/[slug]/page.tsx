@@ -2,13 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { BackToHome } from '@/components/BackToHome'
-import { SiteHeader } from '@/components/SiteHeader'
+import { SiteHeaderWithSettings } from '@/components/SiteHeaderWithSettings'
 import { TableOfContents } from '@/components/TableOfContents'
 import { Infobox } from '@/components/Infobox'
 import { ArticleContent, extractHeadings } from '@/components/ArticleContent'
 import { prisma } from '@/lib/prisma'
 import { getArticleSlugMap, getSiteSettings } from '@/lib/data'
-import { buildMetadata, buildArticleJsonLd, buildBreadcrumbJsonLd } from '@/lib/seo'
+import { buildMetadata, buildArticleJsonLd, buildBreadcrumbJsonLd, toJsonLdScript } from '@/lib/seo'
 import styles from './page.module.css'
 
 interface Props {
@@ -84,9 +84,9 @@ export default async function WikiArticlePage({ params }: Props) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
-      <SiteHeader siteName={settings.siteName} logoUrl={settings.logoUrl} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLdScript(articleLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLdScript(breadcrumbs) }} />
+      <SiteHeaderWithSettings showSearch={false} />
       <main className={`container ${styles.main}`}>
         <BackToHome />
         <div className={styles.layout}>
@@ -94,16 +94,18 @@ export default async function WikiArticlePage({ params }: Props) {
             <h1 className={styles.title}>{article.title}</h1>
             {article.summary && <p className={styles.summary}>{article.summary}</p>}
             <TableOfContents headings={headings} />
-            <Infobox
-              imageUrl={article.infoboxImageUrl}
-              caption={article.infoboxCaption}
-              rows={article.infoboxRows.map((r) => ({ label: r.label, value: r.value }))}
-            />
-            <ArticleContent
-              content={article.content}
-              articleSlugs={slugMap}
-              emblemUrl={settings.emblemUrl}
-            />
+            <div className={styles.articleGrid}>
+              <ArticleContent
+                content={article.content}
+                articleSlugs={slugMap}
+                emblemUrl={settings.emblemUrl}
+              />
+              <Infobox
+                imageUrl={article.infoboxImageUrl}
+                caption={article.infoboxCaption}
+                rows={article.infoboxRows.map((r) => ({ label: r.label, value: r.value }))}
+              />
+            </div>
           </div>
         </div>
         {article.category && (

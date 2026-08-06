@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { AdminIcon } from '@/components/admin/AdminIcon'
 
 export default async function AdminArticlesPage() {
   const session = await getSession()
@@ -16,7 +17,10 @@ export default async function AdminArticlesPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 className="admin-page-title" style={{ margin: 0 }}>Статьи</h1>
-        <Link href="/admin/articles/new" className="btn btn--primary">+ Новая статья</Link>
+        <Link href="/admin/articles/new" className="btn btn--primary">
+          <AdminIcon name="plus" />
+          Новая статья
+        </Link>
       </div>
 
       <div className="admin-card">
@@ -46,7 +50,10 @@ export default async function AdminArticlesPage() {
                   )}
                 </td>
                 <td>
-                  <Link href={`/admin/articles/${a.id}`} className="btn">Редактировать</Link>
+                  <Link href={`/admin/articles/${a.id}`} className="btn">
+                    <AdminIcon name="edit" />
+                    Редактировать
+                  </Link>
                 </td>
               </tr>
             ))}

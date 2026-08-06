@@ -1,4 +1,5 @@
 import { getSession } from '@/lib/auth'
+import { AdminModalProvider } from '@/components/admin/AdminModalProvider'
 import { AdminShell } from './AdminShell'
 import './admin.css'
 
@@ -6,7 +7,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await getSession()
 
   if (!session) {
-    return <>{children}</>
+    return <AdminModalProvider>{children}</AdminModalProvider>
   }
 
   return <AdminShell>{children}</AdminShell>

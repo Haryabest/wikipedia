@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { RichTextEditor } from '@/components/RichTextEditor'
 import { AdminCheckbox } from '@/components/admin/AdminCheckbox'
+import { AdminButton, AdminIconButton } from '@/components/admin/AdminButton'
 import { ImageUploadField } from '@/components/admin/ImageUploadField'
 import { useAdminModal } from '@/components/admin/AdminModalProvider'
 import { autoMetaDescription } from '@/lib/seo'
+import { adminFetch } from '@/lib/admin-fetch'
 import { isLegacyContent, parseSections } from '@/lib/wiki'
 import { validateForPublish, type FieldErrors, type PublishField } from '@/lib/article-validation'
 import styles from './ArticleForm.module.css'
@@ -81,19 +83,24 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
   )
 
   useEffect(() => {
-    fetch('/api/categories').then((r) => r.json()).then((cats: Category[]) => {
-      setCategories(cats)
-      if (initial?.categoryId) {
-        const selected = cats.find((c) => c.id === initial.categoryId)
-        if (selected?.parentId) {
-          setMainCategoryId(selected.parentId)
-          setSubcategoryId(selected.id)
-        } else if (selected) {
-          setMainCategoryId(selected.id)
+    adminFetch<Category[]>('/api/categories')
+      .then((cats) => {
+        setCategories(cats)
+        if (initial?.categoryId) {
+          const selected = cats.find((c) => c.id === initial.categoryId)
+          if (selected?.parentId) {
+            setMainCategoryId(selected.parentId)
+            setSubcategoryId(selected.id)
+          } else if (selected) {
+            setMainCategoryId(selected.id)
+          }
         }
-      }
-    })
-  }, [initial?.categoryId])
+      })
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.message === 'Unauthorized') return
+        void modal.alert(err instanceof Error ? err.message : 'Не удалось загрузить категории', 'Ошибка')
+      })
+  }, [initial?.categoryId, modal])
 
   const computedMeta = useMemo(
     () => autoMetaDescription(summary, content, title),
@@ -127,9 +134,7 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
   async function uploadFile(file: File): Promise<string> {
     const fd = new FormData()
     fd.append('file', file)
-    const res = await fetch('/api/upload', { method: 'POST', body: fd })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error)
+    const data = await adminFetch<{ url: string }>('/api/upload', { method: 'POST', body: fd })
     return data.url
   }
 
@@ -161,40 +166,45 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
       hidden,
     }
 
-    const res = await fetch(
-      mode === 'create' ? '/api/articles' : `/api/articles/${articleId}`,
-      {
-        method: mode === 'create' ? 'POST' : 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }
-    )
+    try {
+      const data = await adminFetch<{ id?: string; fields?: FieldErrors; error?: string }>(
+        mode === 'create' ? '/api/articles' : `/api/articles/${articleId}`,
+        {
+          method: mode === 'create' ? 'POST' : 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      )
 
-    const data = await res.json().catch(() => ({}))
-
-    if (res.ok) {
       if (mode === 'create') {
         router.push(`/admin/articles/${data.id}`)
       } else {
         router.refresh()
         await modal.alert('Сохранено')
       }
-    } else {
-      if (data.fields && typeof data.fields === 'object') {
-        setErrors(data.fields as FieldErrors)
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Unauthorized') return
+      const fields = (err as { data?: { fields?: FieldErrors } } | null)?.data?.fields
+      if (fields && typeof fields === 'object') {
+        setErrors(fields)
       }
-      setSubmitError(typeof data.error === 'string' ? data.error : 'Не удалось сохранить статью')
+      setSubmitError(err instanceof Error ? err.message : 'Не удалось сохранить статью')
+    } finally {
+      setSaving(false)
     }
-
-    setSaving(false)
   }
 
   async function handleDelete() {
     if (!articleId) return
     const ok = await modal.confirm('Удалить статью?')
     if (!ok) return
-    await fetch(`/api/articles/${articleId}`, { method: 'DELETE' })
-    router.push('/admin/articles')
+    try {
+      await adminFetch(`/api/articles/${articleId}`, { method: 'DELETE' })
+      router.push('/admin/articles')
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Unauthorized') return
+      await modal.alert(err instanceof Error ? err.message : 'Не удалось удалить статью', 'Ошибка')
+    }
   }
 
   const errorList = Object.values(errors)
@@ -338,12 +348,17 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
                     copy[i] = { ...copy[i], value: e.target.value }
                     setInfoboxRows(copy)
                   }} />
-                  <button type="button" className="btn btn--danger" onClick={() => setInfoboxRows(infoboxRows.filter((_, j) => j !== i))}>✕</button>
+                  <AdminIconButton
+                    icon="trash"
+                    title="Удалить строку"
+                    variant="danger"
+                    onClick={() => setInfoboxRows(infoboxRows.filter((_, j) => j !== i))}
+                  />
                 </div>
               ))}
-              <button type="button" className="btn" onClick={() => setInfoboxRows([...infoboxRows, { label: '', value: '' }])}>
-                + Добавить строку
-              </button>
+              <AdminButton type="button" icon="plus" onClick={() => setInfoboxRows([...infoboxRows, { label: '', value: '' }])}>
+                Добавить строку
+              </AdminButton>
             </div>
 
             <div className="admin-card admin-card--compact admin-form">
@@ -365,11 +380,13 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
               />
 
               <div className="admin-actions">
-                <button type="submit" className="btn btn--primary" disabled={saving}>
+                <AdminButton type="submit" icon="save" variant="primary" disabled={saving}>
                   {saving ? 'Сохранение...' : mode === 'create' ? 'Создать' : 'Сохранить'}
-                </button>
+                </AdminButton>
                 {mode === 'edit' && (
-                  <button type="button" className="btn btn--danger" onClick={handleDelete}>Удалить</button>
+                  <AdminButton type="button" icon="trash" variant="danger" onClick={handleDelete}>
+                    Удалить
+                  </AdminButton>
                 )}
               </div>
             </div>

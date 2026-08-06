@@ -1,7 +1,10 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useState } from 'react'
+import { AdminIcon } from '@/components/admin/AdminIcon'
+import { AdminButton, AdminIconButton } from '@/components/admin/AdminButton'
 import { useAdminModal } from '@/components/admin/AdminModalProvider'
+import { adminFetch } from '@/lib/admin-fetch'
 
 interface Article {
   id: string
@@ -27,62 +30,77 @@ export default function AdminCarouselPage() {
   const [caption, setCaption] = useState('')
   const [articleId, setArticleId] = useState('')
 
-  async function load() {
-    const [slidesRes, articlesRes] = await Promise.all([
-      fetch('/api/carousel'),
-      fetch('/api/articles'),
-    ])
-    setSlides(await slidesRes.json())
-    setArticles(await articlesRes.json())
-  }
+  const load = useCallback(async () => {
+    try {
+      const [slidesData, articlesData] = await Promise.all([
+        adminFetch<Slide[]>('/api/carousel'),
+        adminFetch<Article[]>('/api/articles'),
+      ])
+      setSlides(slidesData)
+      setArticles(articlesData)
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Unauthorized') return
+      await modal.alert(err instanceof Error ? err.message : 'Не удалось загрузить карусель', 'Ошибка')
+    }
+  }, [modal])
 
   useEffect(() => {
     void load()
-  }, [])
+  }, [load])
 
   async function uploadFile(file: File): Promise<string> {
     const fd = new FormData()
     fd.append('file', file)
-    const res = await fetch('/api/upload', { method: 'POST', body: fd })
-    return (await res.json()).url
+    const data = await adminFetch<{ url: string }>('/api/upload', { method: 'POST', body: fd })
+    return data.url
   }
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
-    const res = await fetch('/api/carousel', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        imageUrl,
-        caption,
-        articleId: articleId || null,
-      }),
-    })
-    if (!res.ok) {
-      const data = await res.json()
-      await modal.alert(data.error ?? 'Ошибка', 'Ошибка')
-      return
+    try {
+      await adminFetch('/api/carousel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl,
+          caption,
+          articleId: articleId || null,
+        }),
+      })
+      setImageUrl('')
+      setCaption('')
+      setArticleId('')
+      await load()
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Unauthorized') return
+      await modal.alert(err instanceof Error ? err.message : 'Не удалось создать слайд', 'Ошибка')
     }
-    setImageUrl('')
-    setCaption('')
-    setArticleId('')
-    load()
   }
 
   async function toggleActive(id: string, active: boolean) {
-    await fetch(`/api/carousel/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ active: !active }),
-    })
-    load()
+    try {
+      await adminFetch(`/api/carousel/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: !active }),
+      })
+      await load()
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Unauthorized') return
+      await modal.alert(err instanceof Error ? err.message : 'Не удалось обновить слайд', 'Ошибка')
+    }
   }
 
   async function handleDelete(id: string) {
     const ok = await modal.confirm('Удалить слайд?')
     if (!ok) return
-    await fetch(`/api/carousel/${id}`, { method: 'DELETE' })
-    load()
+    try {
+      await adminFetch(`/api/carousel/${id}`, { method: 'DELETE' })
+      await load()
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Unauthorized') return
+      await modal.alert(err instanceof Error ? err.message : 'Не удалось удалить слайд', 'Ошибка')
+    }
   }
 
   return (
@@ -96,10 +114,18 @@ export default function AdminCarouselPage() {
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} required style={{ marginBottom: 0, flex: 1 }} />
             <label className="btn">
+              <AdminIcon name="upload" />
               Загрузить
               <input type="file" accept="image/*" hidden onChange={async (e) => {
                 const file = e.target.files?.[0]
-                if (file) setImageUrl(await uploadFile(file))
+                e.target.value = ''
+                if (!file) return
+                try {
+                  setImageUrl(await uploadFile(file))
+                } catch (err: unknown) {
+                  if (err instanceof Error && err.message === 'Unauthorized') return
+                  await modal.alert(err instanceof Error ? err.message : 'Не удалось загрузить изображение', 'Ошибка')
+                }
               }} />
             </label>
           </div>
@@ -112,7 +138,7 @@ export default function AdminCarouselPage() {
               <option key={a.id} value={a.id}>{a.title}</option>
             ))}
           </select>
-          <button type="submit" className="btn btn--primary">Добавить слайд</button>
+          <AdminButton type="submit" icon="plus" variant="primary">Добавить слайд</AdminButton>
         </form>
       )}
 
@@ -124,13 +150,13 @@ export default function AdminCarouselPage() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div>{s.caption ?? '—'}</div>
               <div style={{ fontSize: 12, color: '#888' }}>
-                {s.linkUrl ?? s.article?.slug ? `/wiki/${s.article?.slug}` : 'Без ссылки'}
+                {s.linkUrl ?? (s.article ? `/wiki/${s.article.slug}` : 'Без ссылки')}
               </div>
             </div>
-            <button type="button" className="btn" onClick={() => toggleActive(s.id, s.active)}>
+            <AdminButton type="button" icon={s.active ? 'eye' : 'eyeOff'} onClick={() => toggleActive(s.id, s.active)}>
               {s.active ? 'Активен' : 'Неактивен'}
-            </button>
-            <button type="button" className="btn btn--danger" onClick={() => handleDelete(s.id)}>✕</button>
+            </AdminButton>
+            <AdminIconButton icon="trash" title="Удалить слайд" variant="danger" onClick={() => handleDelete(s.id)} />
           </div>
         ))}
       </div>

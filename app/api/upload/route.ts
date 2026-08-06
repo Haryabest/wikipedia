@@ -27,7 +27,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Слишком много загрузок' }, { status: 429 })
   }
 
-  const formData = await request.formData()
+  let formData: FormData
+  try {
+    formData = await request.formData()
+  } catch {
+    return NextResponse.json({ error: 'Некорректная форма загрузки' }, { status: 400 })
+  }
   const file = formData.get('file')
 
   if (!(file instanceof File)) {
@@ -44,7 +49,13 @@ export async function POST(request: Request) {
 
   const ext = file.type.split('/')[1]?.replace('jpeg', 'jpg') ?? 'bin'
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-  const buffer = Buffer.from(await file.arrayBuffer())
+
+  let buffer: Buffer
+  try {
+    buffer = Buffer.from(await file.arrayBuffer())
+  } catch {
+    return NextResponse.json({ error: 'Не удалось прочитать файл' }, { status: 400 })
+  }
 
   try {
     const url = await uploadToMinio(buffer, filename, file.type)

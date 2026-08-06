@@ -1,5 +1,5 @@
 import { BackToHome } from '@/components/BackToHome'
-import { SiteHeader } from '@/components/SiteHeader'
+import { SiteHeaderWithSettings } from '@/components/SiteHeaderWithSettings'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { getSiteSettings } from '@/lib/data'
@@ -21,9 +21,9 @@ export default async function SearchPage({ searchParams }: Props) {
             published: true,
             hidden: false,
             OR: [
-              { title: { contains: query } },
-              { summary: { contains: query } },
-              { content: { contains: query } },
+              { title: { contains: query, mode: 'insensitive' } },
+              { summary: { contains: query, mode: 'insensitive' } },
+              { content: { contains: query, mode: 'insensitive' } },
             ],
           },
           orderBy: { title: 'asc' },
@@ -34,7 +34,7 @@ export default async function SearchPage({ searchParams }: Props) {
 
   return (
     <>
-      <SiteHeader siteName={settings.siteName} logoUrl={settings.logoUrl} />
+      <SiteHeaderWithSettings />
       <main className={`container ${styles.main}`}>
         <BackToHome />
         <h1 className={styles.title}>Поиск</h1>

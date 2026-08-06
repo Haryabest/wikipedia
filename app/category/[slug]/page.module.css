@@ -1,6 +1,6 @@
 .main {
   padding: 32px 0 64px;
-  max-width: var(--content-width);
+  width: 100%;
 }
 
 .back {
@@ -19,11 +19,6 @@
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 16px;
-  color: var(--text-secondary);
-}
-
-.count {
-  font-weight: 400;
   color: var(--text-secondary);
 }
 
@@ -66,28 +61,6 @@
   background: var(--bg);
   padding: 2px 8px;
   border-radius: 999px;
-}
-
-.empty {
-  color: var(--text-secondary);
-}
-
-.list {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-@media (max-width: 1024px) {
-  .list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .list {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 768px) {

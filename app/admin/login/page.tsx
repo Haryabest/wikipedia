@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -15,20 +16,25 @@ export default function AdminLoginPage() {
     setLoading(true)
     setError('')
 
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
 
-    if (res.ok) {
-      router.push('/admin')
-      router.refresh()
-    } else {
-      const data = await res.json()
-      setError(data.error ?? 'Ошибка входа')
+      if (res.ok) {
+        router.push('/admin')
+        router.refresh()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(typeof data.error === 'string' ? data.error : 'Ошибка входа')
+      }
+    } catch {
+      setError('Не удалось выполнить вход')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -55,9 +61,9 @@ export default function AdminLoginPage() {
             autoComplete="current-password"
           />
           {error && <p style={{ color: '#dc2626', fontSize: 14 }}>{error}</p>}
-          <button type="submit" className="btn btn--primary" disabled={loading} style={{ width: '100%' }}>
+          <AdminButton type="submit" icon="login" variant="primary" disabled={loading} style={{ width: '100%' }}>
             {loading ? 'Вход...' : 'Войти'}
-          </button>
+          </AdminButton>
         </form>
       </div>
     </div>

@@ -1,131 +1,227 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
-import { ImageUploadField } from '@/components/admin/ImageUploadField'
-import { useAdminModal } from '@/components/admin/AdminModalProvider'
-import type { SocialLinkItem } from '@/lib/social-links'
-import { parseSocialLinks } from '@/lib/social-links'
 
-const EMPTY_LINK: SocialLinkItem = { imageUrl: '', url: '', label: '' }
+
+import { FormEvent, useEffect, useState } from 'react'
+
+import { SocialLinksEditor } from '@/components/admin/SocialLinksEditor'
+
+import { AdminButton } from '@/components/admin/AdminButton'
+import { ImageUploadField } from '@/components/admin/ImageUploadField'
+
+import { useAdminModal } from '@/components/admin/AdminModalProvider'
+
+import { isSocialLinkComplete, parseSocialLinks, type SocialLinkItem } from '@/lib/social-links'
+
+import { adminFetch } from '@/lib/admin-fetch'
+
+
 
 export default function AdminSettingsPage() {
+
   const modal = useAdminModal()
+
   const [siteName, setSiteName] = useState('')
+
   const [logoUrl, setLogoUrl] = useState('')
+
   const [emblemUrl, setEmblemUrl] = useState('')
+
   const [siteUrl, setSiteUrl] = useState('')
-  const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>([
-    { ...EMPTY_LINK },
-    { ...EMPTY_LINK },
-  ])
+
+  const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>([])
+
   const [saving, setSaving] = useState(false)
 
+
+
   useEffect(() => {
-    fetch('/api/settings').then((r) => r.json()).then((s) => {
-      setSiteName(s.siteName ?? '')
-      setLogoUrl(s.logoUrl ?? '')
-      setEmblemUrl(s.emblemUrl ?? '')
-      setSiteUrl(s.siteUrl ?? '')
-      const links = parseSocialLinks(s.socialLinks)
-      setSocialLinks([
-        links[0] ?? { ...EMPTY_LINK },
-        links[1] ?? { ...EMPTY_LINK },
-      ])
-    })
-  }, [])
+
+    adminFetch<{
+
+      siteName?: string
+
+      logoUrl?: string | null
+
+      emblemUrl?: string | null
+
+      siteUrl?: string
+
+      socialLinks?: unknown
+
+    }>('/api/settings')
+
+      .then((s) => {
+
+        setSiteName(s.siteName ?? '')
+
+        setLogoUrl(s.logoUrl ?? '')
+
+        setEmblemUrl(s.emblemUrl ?? '')
+
+        setSiteUrl(s.siteUrl ?? '')
+
+        setSocialLinks(parseSocialLinks(s.socialLinks))
+
+      })
+
+      .catch((err: unknown) => {
+
+        if (err instanceof Error && err.message === 'Unauthorized') return
+
+        void modal.alert(err instanceof Error ? err.message : 'Не удалось загрузить настройки', 'Ошибка')
+
+      })
+
+  }, [modal])
+
+
 
   async function uploadFile(file: File): Promise<string> {
+
     const fd = new FormData()
+
     fd.append('file', file)
-    const res = await fetch('/api/upload', { method: 'POST', body: fd })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error)
+
+    const data = await adminFetch<{ url: string }>('/api/upload', { method: 'POST', body: fd })
+
     return data.url
+
   }
 
-  function updateSocialLink(index: number, patch: Partial<SocialLinkItem>) {
-    setSocialLinks((prev) => prev.map((link, i) => (i === index ? { ...link, ...patch } : link)))
-  }
+
 
   async function handleSubmit(e: FormEvent) {
+
     e.preventDefault()
+
     setSaving(true)
-    await fetch('/api/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        siteName,
-        logoUrl: logoUrl || null,
-        emblemUrl: emblemUrl || null,
-        siteUrl,
-        socialLinks: socialLinks.filter((l) => l.imageUrl.trim() && l.url.trim()),
-      }),
-    })
-    setSaving(false)
-    await modal.alert('Сохранено')
+
+    try {
+
+      await adminFetch('/api/settings', {
+
+        method: 'PUT',
+
+        headers: { 'Content-Type': 'application/json' },
+
+        body: JSON.stringify({
+
+          siteName,
+
+          logoUrl: logoUrl || null,
+
+          emblemUrl: emblemUrl || null,
+
+          siteUrl,
+
+          socialLinks: socialLinks.filter(isSocialLinkComplete),
+
+        }),
+
+      })
+
+      await modal.alert('Сохранено')
+
+    } catch (err: unknown) {
+
+      if (err instanceof Error && err.message === 'Unauthorized') return
+
+      await modal.alert(err instanceof Error ? err.message : 'Не удалось сохранить настройки', 'Ошибка')
+
+    } finally {
+
+      setSaving(false)
+
+    }
+
   }
 
+
+
   return (
+
     <div>
+
       <h1 className="admin-page-title">Настройки сайта</h1>
 
+
+
       <form onSubmit={handleSubmit} className="admin-form">
+
         <div className="admin-card">
+
           <label htmlFor="siteName">Название сайта</label>
+
           <input id="siteName" value={siteName} onChange={(e) => setSiteName(e.target.value)} />
 
+
+
           <label htmlFor="siteUrl">URL сайта (для SEO)</label>
+
           <input id="siteUrl" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} placeholder="https://mydomain.com" />
 
-          <ImageUploadField
-            label="Логотип (главная страница)"
-            value={logoUrl}
-            onChange={setLogoUrl}
-            onUpload={uploadFile}
-          />
+
 
           <ImageUploadField
-            label="Эмблема (на каждой странице статьи)"
-            value={emblemUrl}
-            onChange={setEmblemUrl}
+
+            label="Логотип в шапке (картинка целиком, вместо иконки и подписи)"
+
+            value={logoUrl}
+
+            onChange={setLogoUrl}
+
             onUpload={uploadFile}
+
           />
+
+          <p className="hint" style={{ marginTop: -8 }}>Если логотип загружен, текстовое название в шапке скрывается и остаётся только для SEO/доступности.</p>
+
+
+
+          <ImageUploadField
+
+            label="Эмблема (на каждой странице статьи)"
+
+            value={emblemUrl}
+
+            onChange={setEmblemUrl}
+
+            onUpload={uploadFile}
+
+          />
+
         </div>
+
+
 
         <div className="admin-card">
-          <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 600 }}>Ссылки на соцсети</h2>
-          <p className="hint" style={{ marginTop: 0 }}>Иконки отображаются на главной странице над каруселью. Нажатие ведёт на указанный URL.</p>
 
-          {socialLinks.map((link, i) => (
-            <div key={i} style={{ marginBottom: i === 0 ? 24 : 0, paddingBottom: i === 0 ? 24 : 0, borderBottom: i === 0 ? '1px solid #eee' : undefined }}>
-              <ImageUploadField
-                label={`Иконка ${i + 1}`}
-                value={link.imageUrl}
-                onChange={(url) => updateSocialLink(i, { imageUrl: url })}
-                onUpload={uploadFile}
-              />
-              <label htmlFor={`social-url-${i}`}>Ссылка {i + 1}</label>
-              <input
-                id={`social-url-${i}`}
-                value={link.url}
-                onChange={(e) => updateSocialLink(i, { url: e.target.value })}
-                placeholder="https://vk.com/... или https://t.me/..."
-              />
-              <label htmlFor={`social-label-${i}`}>Подпись (необязательно)</label>
-              <input
-                id={`social-label-${i}`}
-                value={link.label ?? ''}
-                onChange={(e) => updateSocialLink(i, { label: e.target.value })}
-                placeholder="VK, Telegram..."
-              />
-            </div>
-          ))}
+          <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 600 }}>Социальные сети</h2>
+
+          <p className="hint" style={{ marginTop: 0, marginBottom: 20 }}>
+
+            Выберите соцсеть из списка, добавьте ссылку и сохраните. До 10 ссылок. Иконки отображаются в шапке и футере.
+
+          </p>
+
+
+
+          <SocialLinksEditor links={socialLinks} onChange={setSocialLinks} onUpload={uploadFile} />
+
         </div>
 
-        <button type="submit" className="btn btn--primary" disabled={saving}>
+
+
+        <AdminButton type="submit" icon="save" variant="primary" disabled={saving}>
           {saving ? 'Сохранение...' : 'Сохранить'}
-        </button>
+        </AdminButton>
+
       </form>
+
     </div>
+
   )
+
 }
+

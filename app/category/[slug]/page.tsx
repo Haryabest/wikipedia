@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { BackToHome } from '@/components/BackToHome'
-import { SiteHeader } from '@/components/SiteHeader'
-import { ArticleCard } from '@/components/ArticleCard'
+import { SiteHeaderWithSettings } from '@/components/SiteHeaderWithSettings'
+import { CategoryArticleList } from '@/components/CategoryArticleList'
 import { prisma } from '@/lib/prisma'
 import { getSiteSettings } from '@/lib/data'
 import { buildMetadata } from '@/lib/seo'
@@ -70,7 +70,7 @@ export default async function CategoryPage({ params }: Props) {
 
   return (
     <>
-      <SiteHeader siteName={settings.siteName} logoUrl={settings.logoUrl} showSearch />
+      <SiteHeaderWithSettings showSearch />
       <main className={`container ${styles.main}`}>
         <BackToHome />
         {category.parent && (
@@ -95,27 +95,16 @@ export default async function CategoryPage({ params }: Props) {
           </section>
         )}
 
-        <section>
-          <h2 className={styles.sectionTitle}>
-            Статьи {articles.length > 0 && <span className={styles.count}>({articles.length})</span>}
-          </h2>
-          {articles.length === 0 ? (
-            <p className={styles.empty}>В этой категории пока нет статей.</p>
-          ) : (
-            <div className={styles.list}>
-              {articles.map((a) => (
-                <ArticleCard
-                  key={a.slug}
-                  title={a.title}
-                  slug={a.slug}
-                  summary={a.summary}
-                  imageUrl={a.infoboxImageUrl}
-                  subcategory={a.category?.id !== category.id ? a.category?.name : null}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+        <CategoryArticleList
+          articles={articles}
+          currentCategoryId={category.id}
+          subcategories={category.children.map((sub) => ({
+            id: sub.id,
+            name: sub.name,
+            slug: sub.slug,
+            count: sub._count.articles,
+          }))}
+        />
       </main>
     </>
   )

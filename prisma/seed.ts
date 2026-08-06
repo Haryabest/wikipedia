@@ -6,7 +6,7 @@ import { IMAGES, CAROUSEL_SLIDES } from '../lib/images'
 const prisma = new PrismaClient()
 
 async function main() {
-  const email = process.env.ADMIN_EMAIL ?? 'admin@example.com'
+  const email = (process.env.ADMIN_EMAIL ?? 'admin@example.com').trim().toLowerCase()
   const password = process.env.ADMIN_PASSWORD ?? 'admin123'
 
   await prisma.user.upsert({
@@ -23,8 +23,8 @@ async function main() {
     where: { id: 'default' },
     update: {
       socialLinks: [
-        { imageUrl: '/images/vk.svg', url: 'https://vk.com', label: 'VK' },
-        { imageUrl: '/images/telegram.svg', url: 'https://t.me', label: 'Telegram' },
+        { imageUrl: '', url: 'https://vk.com', label: 'VK', iconFile: 'VK.svg' },
+        { imageUrl: '', url: 'https://t.me', label: 'Telegram', iconFile: 'Telegram.svg' },
       ],
     },
     create: {
@@ -32,8 +32,8 @@ async function main() {
       siteName: 'Wiki',
       siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
       socialLinks: [
-        { imageUrl: '/images/vk.svg', url: 'https://vk.com', label: 'VK' },
-        { imageUrl: '/images/telegram.svg', url: 'https://t.me', label: 'Telegram' },
+        { imageUrl: '', url: 'https://vk.com', label: 'VK', iconFile: 'VK.svg' },
+        { imageUrl: '', url: 'https://t.me', label: 'Telegram', iconFile: 'Telegram.svg' },
       ],
     },
   })

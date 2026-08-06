@@ -1,12 +1,10 @@
-import { SiteHeader } from '@/components/SiteHeader'
+import { SiteHeaderWithSettings } from '@/components/SiteHeaderWithSettings'
 import { Carousel } from '@/components/Carousel'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { AlphabetIndex } from '@/components/AlphabetIndex'
 import { getCarouselSlides, getSiteSettings, getVisibleArticles, getVisibleCategories } from '@/lib/data'
-import { buildMetadata, buildWebsiteJsonLd } from '@/lib/seo'
+import { buildMetadata, buildWebsiteJsonLd, toJsonLdScript } from '@/lib/seo'
 import type { Metadata } from 'next'
-import { SocialLinks } from '@/components/SocialLinks'
-import { parseSocialLinks } from '@/lib/social-links'
 import styles from './page.module.css'
 
 export const dynamic = 'force-dynamic'
@@ -39,15 +37,14 @@ export default async function HomePage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }} />
-      <SiteHeader siteName={settings.siteName} logoUrl={settings.logoUrl} showSearch />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLdScript(websiteLd) }} />
+      <SiteHeaderWithSettings showSearch />
       <main className="container">
-        <SocialLinks links={parseSocialLinks(settings.socialLinks)} />
         <div className={styles.hero}>
           <Carousel slides={slides} />
         </div>
 
-        <section aria-labelledby="categories-heading">
+        <section className={styles.categoriesSection} aria-labelledby="categories-heading">
           <h2 id="categories-heading" className={styles.sectionTitle}>Статьи по категориям</h2>
           <CategoryGrid categories={categories} />
         </section>

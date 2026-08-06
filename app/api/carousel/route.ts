@@ -47,7 +47,8 @@ export async function POST(request: Request) {
   let linkUrl = parsed.data.linkUrl
   if (parsed.data.articleId) {
     const article = await prisma.article.findUnique({ where: { id: parsed.data.articleId } })
-    if (article) linkUrl = `/wiki/${article.slug}`
+    if (!article) return NextResponse.json({ error: 'Статья не найдена' }, { status: 400 })
+    linkUrl = `/wiki/${article.slug}`
   }
 
   const slide = await prisma.carouselSlide.create({

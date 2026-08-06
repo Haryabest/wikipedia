@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import { WikiImage } from './WikiImage'
 import styles from './CategoryGrid.module.css'
@@ -13,6 +14,15 @@ interface Category {
 interface CategoryGridProps {
   categories: Category[]
 }
+
+const PLACEHOLDER_GRADIENTS = [
+  'linear-gradient(145deg, #b85c38 0%, #7a3b24 100%)',
+  'linear-gradient(145deg, #e8a87c 0%, #c97b4a 100%)',
+  'linear-gradient(145deg, #c9a227 0%, #9a7b1a 100%)',
+  'linear-gradient(145deg, #5b7c99 0%, #3d5568 100%)',
+  'linear-gradient(145deg, #8b6f5c 0%, #5c483a 100%)',
+  'linear-gradient(145deg, #6b8f71 0%, #4a634e 100%)',
+]
 
 function articleLabel(count: number): string {
   const mod10 = count % 10
@@ -30,23 +40,41 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
 
   return (
     <div className={styles.grid}>
-      {categories.map((cat) => (
-        <Link key={cat.id} href={`/category/${cat.slug}`} className={styles.card}>
-          <div className={styles.imageWrap}>
-            {cat.imageUrl ? (
-              <WikiImage src={cat.imageUrl} alt={cat.name} className={styles.image} loading="lazy" />
-            ) : (
-              <div className={styles.placeholder} aria-hidden>{cat.name[0]}</div>
-            )}
-          </div>
-          <div className={styles.info}>
-            <h3 className={styles.title}>{cat.name}</h3>
-            <span className={styles.count}>
-              {cat._count?.articles ?? 0} {articleLabel(cat._count?.articles ?? 0)}
-            </span>
-          </div>
-        </Link>
-      ))}
+      {categories.map((cat, index) => {
+        const count = cat._count?.articles ?? 0
+
+        return (
+          <Link
+            key={cat.id}
+            href={`/category/${cat.slug}`}
+            className={styles.card}
+            style={{ '--card-index': index } as CSSProperties}
+          >
+            <div className={styles.info}>
+              <span className={styles.label}>Категория</span>
+              <h3 className={styles.title}>{cat.name}</h3>
+              <p className={styles.meta}>
+                {count} {articleLabel(count)}
+              </p>
+              <span className={styles.cta} aria-hidden>Открыть →</span>
+            </div>
+
+            <div className={styles.media}>
+              {cat.imageUrl ? (
+                <WikiImage src={cat.imageUrl} alt="" className={styles.image} loading="lazy" />
+              ) : (
+                <div
+                  className={styles.placeholder}
+                  style={{ background: PLACEHOLDER_GRADIENTS[index % PLACEHOLDER_GRADIENTS.length] }}
+                  aria-hidden
+                >
+                  <span className={styles.placeholderLetter}>{cat.name[0]}</span>
+                </div>
+              )}
+            </div>
+          </Link>
+        )
+      })}
     </div>
   )
 }

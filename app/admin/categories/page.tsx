@@ -1,7 +1,10 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useState } from 'react'
+import { AdminIcon } from '@/components/admin/AdminIcon'
+import { AdminButton, AdminIconButton } from '@/components/admin/AdminButton'
 import { useAdminModal } from '@/components/admin/AdminModalProvider'
+import { adminFetch } from '@/lib/admin-fetch'
 
 interface Category {
   id: string
@@ -21,54 +24,72 @@ export default function AdminCategoriesPage() {
   const [imageUrl, setImageUrl] = useState('')
   const [parentId, setParentId] = useState('')
 
-  async function load() {
-    const res = await fetch('/api/categories')
-    setCategories(await res.json())
-  }
+  const load = useCallback(async () => {
+    try {
+      setCategories(await adminFetch<Category[]>('/api/categories'))
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Unauthorized') return
+      await modal.alert(err instanceof Error ? err.message : 'Не удалось загрузить категории', 'Ошибка')
+    }
+  }, [modal])
 
   useEffect(() => {
     void load()
-  }, [])
+  }, [load])
 
   async function uploadFile(file: File): Promise<string> {
     const fd = new FormData()
     fd.append('file', file)
-    const res = await fetch('/api/upload', { method: 'POST', body: fd })
-    const data = await res.json()
+    const data = await adminFetch<{ url: string }>('/api/upload', { method: 'POST', body: fd })
     return data.url
   }
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
-    await fetch('/api/categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        imageUrl: imageUrl || null,
-        parentId: parentId || null,
-      }),
-    })
-    setName('')
-    setImageUrl('')
-    setParentId('')
-    load()
+    try {
+      await adminFetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          imageUrl: imageUrl || null,
+          parentId: parentId || null,
+        }),
+      })
+      setName('')
+      setImageUrl('')
+      setParentId('')
+      await load()
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Unauthorized') return
+      await modal.alert(err instanceof Error ? err.message : 'Не удалось создать категорию', 'Ошибка')
+    }
   }
 
   async function toggleHidden(id: string, hidden: boolean) {
-    await fetch(`/api/categories/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ hidden: !hidden }),
-    })
-    load()
+    try {
+      await adminFetch(`/api/categories/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hidden: !hidden }),
+      })
+      await load()
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Unauthorized') return
+      await modal.alert(err instanceof Error ? err.message : 'Не удалось обновить категорию', 'Ошибка')
+    }
   }
 
   async function handleDelete(id: string) {
     const ok = await modal.confirm('Удалить категорию?')
     if (!ok) return
-    await fetch(`/api/categories/${id}`, { method: 'DELETE' })
-    load()
+    try {
+      await adminFetch(`/api/categories/${id}`, { method: 'DELETE' })
+      await load()
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Unauthorized') return
+      await modal.alert(err instanceof Error ? err.message : 'Не удалось удалить категорию', 'Ошибка')
+    }
   }
 
   const mainCategories = categories.filter((c) => !c.parentId)
@@ -92,16 +113,24 @@ export default function AdminCategoriesPage() {
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} style={{ marginBottom: 0, flex: 1 }} />
           <label className="btn">
+            <AdminIcon name="upload" />
             Загрузить
             <input type="file" accept="image/*" hidden onChange={async (e) => {
               const file = e.target.files?.[0]
-              if (file) setImageUrl(await uploadFile(file))
+              e.target.value = ''
+              if (!file) return
+              try {
+                setImageUrl(await uploadFile(file))
+              } catch (err: unknown) {
+                if (err instanceof Error && err.message === 'Unauthorized') return
+                await modal.alert(err instanceof Error ? err.message : 'Не удалось загрузить изображение', 'Ошибка')
+              }
             }} />
           </label>
         </div>
-        <button type="submit" className="btn btn--primary">
+        <AdminButton type="submit" icon="plus" variant="primary">
           {parentId ? 'Добавить подкатегорию' : 'Добавить категорию'}
-        </button>
+        </AdminButton>
       </form>
 
       <div className="admin-card">
@@ -118,10 +147,19 @@ export default function AdminCategoriesPage() {
                 <td>{c._count?.articles ?? 0}</td>
                 <td>{c.hidden ? <span className="badge badge--red">Скрыта</span> : <span className="badge badge--green">Видна</span>}</td>
                 <td>
-                  <button type="button" className="btn" onClick={() => toggleHidden(c.id, c.hidden)}>
+                  <AdminButton
+                    type="button"
+                    icon={c.hidden ? 'eye' : 'eyeOff'}
+                    onClick={() => toggleHidden(c.id, c.hidden)}
+                  >
                     {c.hidden ? 'Показать' : 'Скрыть'}
-                  </button>
-                  <button type="button" className="btn btn--danger" onClick={() => handleDelete(c.id)} style={{ marginLeft: 4 }}>✕</button>
+                  </AdminButton>
+                  <AdminIconButton
+                    icon="trash"
+                    title="Удалить категорию"
+                    variant="danger"
+                    onClick={() => handleDelete(c.id)}
+                  />
                 </td>
               </tr>
             ))}

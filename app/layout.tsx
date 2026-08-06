@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { ConditionalFooter } from '@/components/ConditionalFooter'
 import './globals.css'
 
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Wiki'
@@ -39,7 +40,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="referrer" content="no-referrer" />
         <link rel="preconnect" href={siteUrl} />
       </head>
-      <body>{children}</body>
+      <body className="site-body">
+        <div className="site-shell">
+          {children}
+        </div>
+        <ConditionalFooter />
+      </body>
     </html>
   )
 }

@@ -40,6 +40,9 @@
 }
 
 .admin-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 12px;
   border-radius: 8px;
   color: #444;
@@ -182,6 +185,16 @@
 .admin-actions .btn {
   flex: 1;
   justify-content: center;
+}
+
+.btn--icon {
+  padding: 8px;
+  min-width: 36px;
+  justify-content: center;
+}
+
+.btn--icon span {
+  display: none;
 }
 
 /* Custom checkbox */

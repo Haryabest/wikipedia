@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { AdminIcon } from '@/components/admin/AdminIcon'
 
 export default async function AdminDashboard() {
   const session = await getSession()
@@ -41,9 +42,18 @@ export default async function AdminDashboard() {
       <div className="admin-card" style={{ marginTop: 24 }}>
         <h3 style={{ margin: '0 0 12px' }}>Быстрые действия</h3>
         <div className="admin-actions">
-          <Link href="/admin/articles/new" className="btn btn--primary">Новая статья</Link>
-          <Link href="/admin/categories" className="btn">Категории</Link>
-          <Link href="/admin/carousel" className="btn">Карусель</Link>
+          <Link href="/admin/articles/new" className="btn btn--primary">
+            <AdminIcon name="article" />
+            Новая статья
+          </Link>
+          <Link href="/admin/categories" className="btn">
+            <AdminIcon name="category" />
+            Категории
+          </Link>
+          <Link href="/admin/carousel" className="btn">
+            <AdminIcon name="carousel" />
+            Карусель
+          </Link>
         </div>
       </div>
     </div>

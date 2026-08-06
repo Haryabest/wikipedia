@@ -5,10 +5,12 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from 'react'
+import { AdminButton } from '@/components/admin/AdminButton'
 
 interface ModalState {
   type: 'alert' | 'confirm'
@@ -56,11 +58,13 @@ export function AdminModalProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (!modal) return
+    const current = modal
+    if (!current) return
+    const modalType = current.type
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        close(modal.type === 'confirm' ? false : true)
+        close(modalType === 'confirm' ? false : true)
       }
     }
 
@@ -68,8 +72,10 @@ export function AdminModalProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [modal, close])
 
+  const value = useMemo(() => ({ alert, confirm }), [alert, confirm])
+
   return (
-    <AdminModalContext.Provider value={{ alert, confirm }}>
+    <AdminModalContext.Provider value={value}>
       {children}
       {modal && (
         <div className="admin-modal-overlay" onClick={() => close(modal.type === 'confirm' ? false : true)}>
@@ -85,17 +91,17 @@ export function AdminModalProvider({ children }: { children: ReactNode }) {
             <div className="admin-modal-actions">
               {modal.type === 'confirm' ? (
                 <>
-                  <button type="button" className="btn" onClick={() => close(false)}>
+                  <AdminButton type="button" icon="x" onClick={() => close(false)}>
                     Отмена
-                  </button>
-                  <button type="button" className="btn btn--danger" onClick={() => close(true)}>
+                  </AdminButton>
+                  <AdminButton type="button" icon="trash" variant="danger" onClick={() => close(true)}>
                     Удалить
-                  </button>
+                  </AdminButton>
                 </>
               ) : (
-                <button type="button" className="btn btn--primary" onClick={() => close(true)}>
+                <AdminButton type="button" icon="check" variant="primary" onClick={() => close(true)}>
                   OK
-                </button>
+                </AdminButton>
               )}
             </div>
           </div>

@@ -11,6 +11,39 @@
   position: relative;
 }
 
+.articleGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.articleGrid > :first-child {
+  grid-column: 1;
+  min-width: 0;
+}
+
+.articleGrid > :last-child {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+@media (max-width: 768px) {
+  .articleGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .articleGrid > :first-child,
+  .articleGrid > :last-child {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .articleGrid > :last-child {
+    order: -1;
+  }
+}
+
 .title {
   font-size: 36px;
   margin: 0 0 8px;

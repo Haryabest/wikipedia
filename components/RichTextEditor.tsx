@@ -7,7 +7,7 @@ import Underline from '@tiptap/extension-underline'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
 import Placeholder from '@tiptap/extension-placeholder'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ResizableImage, IMAGE_WIDTH_PRESETS } from '@/lib/tiptap-resizable-image'
 import styles from './RichTextEditor.module.css'
 
@@ -25,6 +25,7 @@ export function RichTextEditor({
   placeholder = 'Начните писать статью...',
 }: RichTextEditorProps) {
   const [imageActive, setImageActive] = useState(false)
+  const lastEmittedContent = useRef(content)
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -38,7 +39,11 @@ export function RichTextEditor({
       Placeholder.configure({ placeholder }),
     ],
     content,
-    onUpdate: ({ editor: e }) => onChange(e.getHTML()),
+    onUpdate: ({ editor: e }) => {
+      const html = e.getHTML()
+      lastEmittedContent.current = html
+      onChange(html)
+    },
     onSelectionUpdate: ({ editor: e }) => {
       setImageActive(e.isActive('image'))
     },
@@ -48,7 +53,9 @@ export function RichTextEditor({
   })
 
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
+    if (!editor) return
+    if (content !== lastEmittedContent.current && content !== editor.getHTML()) {
+      lastEmittedContent.current = content
       editor.commands.setContent(content, { emitUpdate: false })
     }
   }, [content, editor])
@@ -61,8 +68,12 @@ export function RichTextEditor({
     input.onchange = async () => {
       const file = input.files?.[0]
       if (!file) return
-      const url = await onUploadImage(file)
-      editor.chain().focus().setImage({ src: url, width: '100%' }).run()
+      try {
+        const url = await onUploadImage(file)
+        editor.chain().focus().setImage({ src: url }).updateAttributes('image', { width: '100%' }).run()
+      } catch (err: unknown) {
+        window.alert(err instanceof Error ? err.message : 'Не удалось загрузить изображение')
+      }
     }
     input.click()
   }, [editor, onUploadImage])

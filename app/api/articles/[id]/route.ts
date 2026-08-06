@@ -4,7 +4,6 @@ import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
 import { createSlug, ensureUniqueSlug } from '@/lib/slug'
 import { stringifySections } from '@/lib/wiki'
-import { autoMetaDescription } from '@/lib/seo'
 import { validateForPublish } from '@/lib/article-validation'
 
 const sectionSchema = z.object({
@@ -141,42 +140,40 @@ export async function PUT(request: Request, context: RouteContext) {
     )
   }
 
-  if (data.infoboxRows) {
-    await prisma.infoboxRow.deleteMany({ where: { articleId: id } })
-    const rows = data.infoboxRows.filter((r) => r.label.trim())
-    if (rows.length) {
-      await prisma.infoboxRow.createMany({
-        data: rows.map((r, i) => ({
-          articleId: id,
-          label: r.label,
-          value: r.value,
-          sortOrder: r.sortOrder ?? i,
-        })),
-      })
+  const rows = data.infoboxRows?.filter((r) => r.label.trim())
+  const metaDescription = data.metaDescription ?? existing.metaDescription
+
+  const article = await prisma.$transaction(async (tx) => {
+    if (rows) {
+      await tx.infoboxRow.deleteMany({ where: { articleId: id } })
+      if (rows.length) {
+        await tx.infoboxRow.createMany({
+          data: rows.map((r, i) => ({
+            articleId: id,
+            label: r.label,
+            value: r.value,
+            sortOrder: r.sortOrder ?? i,
+          })),
+        })
+      }
     }
-  }
 
-  const metaDescription =
-    data.metaDescription ||
-    (content !== undefined
-      ? autoMetaDescription(data.summary ?? existing.summary ?? '', content, data.title ?? existing.title)
-      : undefined)
-
-  const article = await prisma.article.update({
-    where: { id },
-    data: {
-      title: data.title,
-      slug,
-      summary: data.summary,
-      metaDescription,
-      infoboxImageUrl: data.infoboxImageUrl,
-      infoboxCaption: data.infoboxCaption,
-      content,
-      categoryId: data.categoryId,
-      published: data.published,
-      hidden: data.hidden,
-    },
-    include: { infoboxRows: { orderBy: { sortOrder: 'asc' } }, category: true },
+    return tx.article.update({
+      where: { id },
+      data: {
+        title: data.title,
+        slug,
+        summary: data.summary,
+        metaDescription,
+        infoboxImageUrl: data.infoboxImageUrl,
+        infoboxCaption: data.infoboxCaption,
+        content,
+        categoryId: data.categoryId,
+        published: data.published,
+        hidden: data.hidden,
+      },
+      include: { infoboxRows: { orderBy: { sortOrder: 'asc' } }, category: true },
+    })
   })
 
   return NextResponse.json(article)
@@ -187,6 +184,15 @@ export async function DELETE(_request: Request, context: RouteContext) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await context.params
-  await prisma.article.delete({ where: { id } })
+  const existing = await prisma.article.findUnique({ where: { id }, select: { id: true, slug: true } })
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  await prisma.$transaction([
+    prisma.carouselSlide.updateMany({
+      where: { OR: [{ articleId: id }, { linkUrl: `/wiki/${existing.slug}` }] },
+      data: { articleId: null, linkUrl: null },
+    }),
+    prisma.article.delete({ where: { id } }),
+  ])
   return NextResponse.json({ ok: true })
 }
