@@ -124,9 +124,12 @@ h1, h2, h3, h4 {
 .logo__img {
   display: block;
   width: auto;
-  max-width: min(320px, 60vw);
-  height: 40px;
+  max-width: min(420px, 72vw);
+  height: auto;
+  max-height: 64px;
+  min-height: 44px;
   object-fit: contain;
+  object-position: left center;
 }
 
 .logo__fallback {

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { AdminIcon } from '@/components/admin/AdminIcon'
+import { ArticleRowActions } from '@/components/admin/ArticleRowActions'
 
 export default async function AdminArticlesPage() {
   const session = await getSession()
@@ -50,10 +51,7 @@ export default async function AdminArticlesPage() {
                   )}
                 </td>
                 <td>
-                  <Link href={`/admin/articles/${a.id}`} className="btn">
-                    <AdminIcon name="edit" />
-                    Редактировать
-                  </Link>
+                  <ArticleRowActions id={a.id} title={a.title} />
                 </td>
               </tr>
             ))}

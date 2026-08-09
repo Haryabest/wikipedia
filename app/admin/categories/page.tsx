@@ -146,7 +146,7 @@ export default function AdminCategoriesPage() {
                 <td>{c.parent ? `Подкат. «${c.parent.name}»` : 'Основная'}</td>
                 <td>{c._count?.articles ?? 0}</td>
                 <td>{c.hidden ? <span className="badge badge--red">Скрыта</span> : <span className="badge badge--green">Видна</span>}</td>
-                <td>
+                <td className="admin-table-actions">
                   <AdminButton
                     type="button"
                     icon={c.hidden ? 'eye' : 'eyeOff'}

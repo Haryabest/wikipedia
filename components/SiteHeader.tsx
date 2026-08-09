@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { SearchForm } from './SearchForm'
 import { SocialLinks } from './SocialLinks'
+import { normalizeMediaUrl } from '@/lib/media-url'
 import type { SocialLinkItem } from '@/lib/social-links'
 
 interface SiteHeaderProps {
@@ -18,7 +19,7 @@ export function SiteHeader({ siteName, logoUrl, socialLinks = [], showSearch = t
           <Link href="/" className="logo" aria-label={siteName}>
             {logoUrl ? (
               <>
-                <img src={logoUrl} alt={siteName} className="logo__img" />
+                <img src={normalizeMediaUrl(logoUrl) ?? logoUrl} alt={siteName} className="logo__img" />
                 <span className="sr-only">{siteName}</span>
               </>
             ) : (

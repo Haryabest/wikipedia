@@ -1,6 +1,7 @@
 'use client'
 
 import { AdminIcon } from '@/components/admin/AdminIcon'
+import { normalizeMediaUrl } from '@/lib/media-url'
 
 interface ImageUploadFieldProps {
   label: string
@@ -25,7 +26,7 @@ export function ImageUploadField({
       <div className={`admin-upload ${error ? 'admin-upload--error' : ''}`}>
         <div className="admin-upload-preview">
           {value ? (
-            <img src={value} alt="" />
+            <img src={normalizeMediaUrl(value) ?? value} alt="" />
           ) : (
             <span className="admin-upload-placeholder">Нет изображения</span>
           )}

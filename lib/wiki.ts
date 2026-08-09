@@ -1,4 +1,5 @@
 import DOMPurify from 'isomorphic-dompurify'
+import { normalizeMediaUrlsInHtml } from '@/lib/media-url'
 
 export interface ArticleSection {
   id: string
@@ -76,11 +77,11 @@ export function renderArticleHtml(content: string, articleSlugs: Map<string, str
         return `${heading}${renderWikiLinks(s.content, articleSlugs)}`
       })
       .join('')
-    return sanitizeHtml(html)
+    return normalizeMediaUrlsInHtml(sanitizeHtml(html))
   }
 
   const withIds = addHeadingIds(content)
-  return sanitizeHtml(renderWikiLinks(withIds, articleSlugs))
+  return normalizeMediaUrlsInHtml(sanitizeHtml(renderWikiLinks(withIds, articleSlugs)))
 }
 
 function addHeadingIds(html: string): string {

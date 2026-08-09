@@ -1,6 +1,11 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { getPublicMediaUrl } from '@/lib/media-url'
 
 let client: S3Client | null = null
+
+export function getBucket(): string {
+  return process.env.MINIO_BUCKET ?? 'wiki-images'
+}
 
 function getClient(): S3Client {
   if (!client) {
@@ -18,9 +23,7 @@ function getClient(): S3Client {
 }
 
 export function getPublicUrl(key: string): string {
-  const base = (process.env.MINIO_PUBLIC_URL ?? process.env.MINIO_ENDPOINT ?? 'http://localhost:9000').replace(/\/$/, '')
-  const bucket = process.env.MINIO_BUCKET ?? 'wiki-images'
-  return `${base}/${bucket}/${key}`
+  return getPublicMediaUrl(key)
 }
 
 export async function uploadToMinio(
@@ -28,7 +31,7 @@ export async function uploadToMinio(
   filename: string,
   contentType: string
 ): Promise<string> {
-  const bucket = process.env.MINIO_BUCKET ?? 'wiki-images'
+  const bucket = getBucket()
   const key = `uploads/${filename}`
 
   await getClient().send(
@@ -41,4 +44,22 @@ export async function uploadToMinio(
   )
 
   return getPublicUrl(key)
+}
+
+export async function getMinioObject(key: string) {
+  const response = await getClient().send(
+    new GetObjectCommand({
+      Bucket: getBucket(),
+      Key: key,
+    })
+  )
+
+  const body = response.Body
+  if (!body) return null
+
+  const data = await body.transformToByteArray()
+  return {
+    data,
+    contentType: response.ContentType ?? 'application/octet-stream',
+  }
 }

@@ -15,6 +15,7 @@ const settingsSchema = z.object({
   siteName: z.string().optional(),
   logoUrl: z.string().optional().nullable(),
   emblemUrl: z.string().optional().nullable(),
+  faviconUrl: z.string().optional().nullable(),
   siteUrl: z.string().optional(),
   socialLinks: z.array(socialLinkSchema).max(10).optional(),
 })
@@ -60,7 +61,7 @@ export async function PUT(request: Request) {
       }
     }
   }
-  for (const key of ['logoUrl', 'emblemUrl'] as const) {
+  for (const key of ['logoUrl', 'emblemUrl', 'faviconUrl'] as const) {
     const value = data[key]
     if (typeof value === 'string' && !value.trim()) data[key] = null
   }

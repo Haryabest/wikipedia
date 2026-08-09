@@ -86,7 +86,7 @@ export default async function WikiArticlePage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLdScript(articleLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLdScript(breadcrumbs) }} />
-      <SiteHeaderWithSettings showSearch={false} />
+      <SiteHeaderWithSettings showSearch />
       <main className={`container ${styles.main}`}>
         <BackToHome />
         <div className={styles.layout}>

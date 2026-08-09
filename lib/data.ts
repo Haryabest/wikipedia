@@ -7,6 +7,7 @@ export function getDefaultSiteSettings() {
     siteName: process.env.NEXT_PUBLIC_SITE_NAME ?? 'Wiki',
     logoUrl: null,
     emblemUrl: null,
+    faviconUrl: null,
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
     socialLinks: [],
   }

@@ -36,16 +36,22 @@ export async function PUT(request: Request, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  let linkUrl = parsed.data.linkUrl
-  if (parsed.data.articleId) {
-    const article = await prisma.article.findUnique({ where: { id: parsed.data.articleId } })
-    if (!article) return NextResponse.json({ error: 'Статья не найдена' }, { status: 400 })
-    linkUrl = `/wiki/${article.slug}`
+  const data: z.infer<typeof updateSchema> & { linkUrl?: string | null } = { ...parsed.data }
+
+  if (parsed.data.articleId !== undefined) {
+    if (parsed.data.articleId) {
+      const article = await prisma.article.findUnique({ where: { id: parsed.data.articleId } })
+      if (!article) return NextResponse.json({ error: 'Статья не найдена' }, { status: 400 })
+      data.linkUrl = `/wiki/${article.slug}`
+    } else {
+      data.linkUrl = null
+      data.articleId = null
+    }
   }
 
   const slide = await prisma.carouselSlide.update({
     where: { id },
-    data: { ...parsed.data, linkUrl },
+    data,
   })
   return NextResponse.json(slide)
 }
