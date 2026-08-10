@@ -2,11 +2,16 @@ import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { getClientIp, rateLimit } from '@/lib/rate-limit'
 import { uploadToMinio } from '@/lib/minio'
+import { detectImageMime, extensionForMime } from '@/lib/image-bytes'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_SIZE = 10 * 1024 * 1024
+
+function shouldPreferLocalUpload(): boolean {
+  const base = process.env.MINIO_PUBLIC_URL ?? process.env.MINIO_ENDPOINT ?? ''
+  return !base || /localhost|127\.0\.0\.1|minio/i.test(base)
+}
 
 async function uploadLocal(buffer: Buffer, filename: string): Promise<string> {
   const uploadDir = path.join(process.cwd(), 'public', 'uploads')
@@ -39,16 +44,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Файл не найден' }, { status: 400 })
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: 'Недопустимый тип файла' }, { status: 400 })
-  }
-
   if (file.size > MAX_SIZE) {
     return NextResponse.json({ error: 'Файл слишком большой (макс. 10 МБ)' }, { status: 400 })
   }
-
-  const ext = file.type.split('/')[1]?.replace('jpeg', 'jpg') ?? 'bin'
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
   let buffer: Buffer
   try {
@@ -57,8 +55,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Не удалось прочитать файл' }, { status: 400 })
   }
 
+  const detectedMime = detectImageMime(buffer)
+  if (!detectedMime) {
+    return NextResponse.json({ error: 'Недопустимый тип файла (только JPEG, PNG, GIF, WebP)' }, { status: 400 })
+  }
+
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extensionForMime(detectedMime)}`
+
+  if (shouldPreferLocalUpload()) {
+    try {
+      const url = await uploadLocal(buffer, filename)
+      return NextResponse.json({ url })
+    } catch {
+      const url = await uploadToMinio(buffer, filename, detectedMime)
+      return NextResponse.json({ url })
+    }
+  }
+
   try {
-    const url = await uploadToMinio(buffer, filename, file.type)
+    const url = await uploadToMinio(buffer, filename, detectedMime)
     return NextResponse.json({ url })
   } catch {
     const url = await uploadLocal(buffer, filename)

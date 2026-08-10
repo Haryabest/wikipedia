@@ -6,13 +6,19 @@
 }
 
 .rowHeader {
-  justify-content: center;
+  justify-content: flex-start;
   margin-bottom: 0;
   gap: 10px;
 }
 
 .rowFooter {
   justify-content: center;
+  margin-bottom: 0;
+  gap: 12px;
+}
+
+.rowDrawer {
+  justify-content: flex-start;
   margin-bottom: 0;
   gap: 12px;
 }

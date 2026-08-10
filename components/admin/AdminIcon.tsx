@@ -1,22 +1,23 @@
+import type { LucideIcon } from 'lucide-react'
 import {
   Check,
   ExternalLink,
   Eye,
   EyeOff,
   FileText,
-  FolderTree,
-  GalleryHorizontal,
-  LayoutDashboard,
+  Folder,
+  Home,
+  Images,
   LogIn,
   LogOut,
   Pencil,
   Plus,
   Save,
+  ScanEye,
   Settings,
   Trash2,
   Upload,
   X,
-  type LucideIcon,
 } from 'lucide-react'
 
 export type AdminIconName =
@@ -37,6 +38,7 @@ export type AdminIconName =
   | 'settings'
   | 'external'
   | 'home'
+  | 'preview'
 
 const ICONS: Record<AdminIconName, LucideIcon> = {
   plus: Plus,
@@ -51,27 +53,22 @@ const ICONS: Record<AdminIconName, LucideIcon> = {
   x: X,
   login: LogIn,
   article: FileText,
-  category: FolderTree,
-  carousel: GalleryHorizontal,
+  category: Folder,
+  carousel: Images,
   settings: Settings,
   external: ExternalLink,
-  home: LayoutDashboard,
+  home: Home,
+  preview: ScanEye,
 }
 
 interface AdminIconProps {
   name: AdminIconName
   size?: number
   className?: string
+  strokeWidth?: number
 }
 
-export function AdminIcon({ name, size = 16, className }: AdminIconProps) {
+export function AdminIcon({ name, size = 16, className, strokeWidth = 2 }: AdminIconProps) {
   const Icon = ICONS[name]
-  return (
-    <Icon
-      size={size}
-      strokeWidth={2}
-      className={className}
-      aria-hidden
-    />
-  )
+  return <Icon size={size} className={className} strokeWidth={strokeWidth} aria-hidden />
 }

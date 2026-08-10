@@ -72,10 +72,128 @@
   padding: 32px 0 64px;
 }
 
+.articleLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 24px;
+  align-items: start;
+}
+
+.articleMain {
+  min-width: 0;
+}
+
+.cardSkeleton {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  overflow: hidden;
+  min-height: 156px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e8e8e8);
+  border-radius: 14px;
+}
+
+.cardSkeletonBody {
+  flex: 1;
+  min-width: 0;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cardSkeletonTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardSkeletonBadge,
+.cardSkeletonCategory,
+.cardSkeletonTitle,
+.cardSkeletonSummary,
+.cardSkeletonLink,
+.cardSkeletonMedia {
+  background: linear-gradient(90deg, #ececec 25%, #f5f5f5 50%, #ececec 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.cardSkeletonBadge {
+  width: 58px;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.cardSkeletonCategory {
+  width: 52px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.cardSkeletonTitle {
+  width: 55%;
+  height: 26px;
+  border-radius: 6px;
+}
+
+.cardSkeletonSummary {
+  width: 100%;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.cardSkeletonFooter {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, #e8e8e8);
+}
+
+.cardSkeletonLink {
+  width: 108px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.cardSkeletonMedia {
+  width: 168px;
+  flex-shrink: 0;
+  min-height: 156px;
+  border-left: 1px solid var(--border, #e8e8e8);
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
 @media (max-width: 768px) {
   .skeletonInfobox {
     float: none;
     width: 100%;
     margin: 0 0 24px;
+  }
+
+  .articleLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .cardSkeleton {
+    min-height: 140px;
+  }
+
+  .cardSkeletonBody {
+    padding: 16px;
+  }
+
+  .cardSkeletonMedia {
+    width: 112px;
+    min-height: 140px;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr;
   }
 }

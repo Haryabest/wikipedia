@@ -79,7 +79,8 @@ model CarouselSlide {
 
 model SiteSettings {
   id          String @id @default("default")
-  siteName    String @default("Wiki")
+  siteName    String @default("Эфитека")
+  siteSubtitle String?
   logoUrl     String?
   emblemUrl   String?
   faviconUrl  String?

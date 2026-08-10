@@ -8,6 +8,18 @@ import { TextStyle } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  Bold,
+  Heading2,
+  Heading3,
+  Image as ImageIcon,
+  Italic,
+  Link2,
+  List,
+  ListOrdered,
+  Underline as UnderlineIcon,
+} from 'lucide-react'
+import { EditorColorPicker } from '@/components/admin/EditorColorPicker'
 import { ResizableImage, IMAGE_WIDTH_PRESETS } from '@/lib/tiptap-resizable-image'
 import styles from './RichTextEditor.module.css'
 
@@ -25,6 +37,7 @@ export function RichTextEditor({
   placeholder = 'Начните писать статью...',
 }: RichTextEditorProps) {
   const [imageActive, setImageActive] = useState(false)
+  const [textColor, setTextColor] = useState('#1a1a1a')
   const lastEmittedContent = useRef(content)
 
   const editor = useEditor({
@@ -46,6 +59,8 @@ export function RichTextEditor({
     },
     onSelectionUpdate: ({ editor: e }) => {
       setImageActive(e.isActive('image'))
+      const color = e.getAttributes('textStyle').color as string | undefined
+      if (color) setTextColor(color)
     },
     editorProps: {
       attributes: { class: styles.editorContent },
@@ -92,10 +107,16 @@ export function RichTextEditor({
     editor.chain().focus().insertContent(`[[${target}|${text}]]`).run()
   }, [editor])
 
-  const setColor = useCallback(() => {
+  const applyTextColor = useCallback((color: string) => {
     if (!editor) return
-    const color = prompt('Цвет (hex, напр. #dc2626):', '#2563eb')
-    if (color) editor.chain().focus().setColor(color).run()
+    setTextColor(color)
+    editor.chain().focus().setColor(color).run()
+  }, [editor])
+
+  const clearTextColor = useCallback(() => {
+    if (!editor) return
+    setTextColor('#1a1a1a')
+    editor.chain().focus().unsetColor().run()
   }, [editor])
 
   if (!editor) return null
@@ -103,19 +124,39 @@ export function RichTextEditor({
   return (
     <div className={styles.wrapper}>
       <div className={styles.toolbar}>
-        <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? styles.active : ''} title="Жирный"><b>B</b></button>
-        <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? styles.active : ''} title="Курсив"><i>I</i></button>
-        <button type="button" onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive('underline') ? styles.active : ''} title="Подчёркнутый"><u>U</u></button>
+        <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? styles.active : ''} title="Жирный">
+          <Bold size={16} strokeWidth={2} />
+        </button>
+        <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? styles.active : ''} title="Курсив">
+          <Italic size={16} strokeWidth={2} />
+        </button>
+        <button type="button" onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive('underline') ? styles.active : ''} title="Подчёркнутый">
+          <UnderlineIcon size={16} strokeWidth={2} />
+        </button>
         <span className={styles.sep} />
-        <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={editor.isActive('heading', { level: 2 }) ? styles.active : ''}>H2</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={editor.isActive('heading', { level: 3 }) ? styles.active : ''}>H3</button>
+        <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={editor.isActive('heading', { level: 2 }) ? styles.active : ''} title="Заголовок H2">
+          <Heading2 size={16} strokeWidth={2} />
+        </button>
+        <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={editor.isActive('heading', { level: 3 }) ? styles.active : ''} title="Заголовок H3">
+          <Heading3 size={16} strokeWidth={2} />
+        </button>
         <span className={styles.sep} />
-        <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={editor.isActive('bulletList') ? styles.active : ''}>• List</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={editor.isActive('orderedList') ? styles.active : ''}>1. List</button>
+        <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={editor.isActive('bulletList') ? styles.active : ''} title="Маркированный список">
+          <List size={16} strokeWidth={2} />
+        </button>
+        <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={editor.isActive('orderedList') ? styles.active : ''} title="Нумерованный список">
+          <ListOrdered size={16} strokeWidth={2} />
+        </button>
         <span className={styles.sep} />
-        <button type="button" onClick={setColor} title="Цвет текста">A</button>
-        <button type="button" onClick={addWikiLink} title="Wiki-ссылка">[[ ]]</button>
-        {onUploadImage && <button type="button" onClick={addImage} title="Вставить изображение">🖼</button>}
+        <EditorColorPicker value={textColor} onChange={applyTextColor} onClear={clearTextColor} />
+        <button type="button" onClick={addWikiLink} title="Ссылка на статью в Эфирии">
+          <Link2 size={16} strokeWidth={2} />
+        </button>
+        {onUploadImage && (
+          <button type="button" onClick={addImage} title="Вставить изображение">
+            <ImageIcon size={16} strokeWidth={2} aria-hidden />
+          </button>
+        )}
         {imageActive && (
           <>
             <span className={styles.sep} />

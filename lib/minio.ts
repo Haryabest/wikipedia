@@ -22,6 +22,10 @@ function getClient(): S3Client {
   return client
 }
 
+export function getMinioClient(): S3Client {
+  return getClient()
+}
+
 export function getPublicUrl(key: string): string {
   return getPublicMediaUrl(key)
 }

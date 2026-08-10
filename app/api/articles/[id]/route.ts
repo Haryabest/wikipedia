@@ -3,8 +3,9 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
 import { createSlug, ensureUniqueSlug } from '@/lib/slug'
-import { stringifySections } from '@/lib/wiki'
+import { stringifySections, sanitizeArticleContentForStorage } from '@/lib/wiki'
 import { validateForPublish } from '@/lib/article-validation'
+import { sanitizeMediaUrl } from '@/lib/safe-url'
 
 const sectionSchema = z.object({
   id: z.string(),
@@ -112,6 +113,14 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   const data = parsed.data
+  if (data.infoboxImageUrl) {
+    const safe = sanitizeMediaUrl(data.infoboxImageUrl)
+    if (!safe) {
+      return NextResponse.json({ error: 'Некорректный URL изображения инфобокса' }, { status: 400 })
+    }
+    data.infoboxImageUrl = safe
+  }
+
   let slug = existing.slug
 
   if (data.slug || data.title) {
@@ -122,7 +131,10 @@ export async function PUT(request: Request, context: RouteContext) {
     })
   }
 
-  const content = normalizeContent(data.content) ?? existing.content
+  const content =
+    data.content !== undefined
+      ? sanitizeArticleContentForStorage(normalizeContent(data.content) ?? '')
+      : existing.content
 
   const publishErrors = await validatePublishPayload({
     title: data.title ?? existing.title,

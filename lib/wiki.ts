@@ -1,6 +1,12 @@
 import DOMPurify from 'isomorphic-dompurify'
 import { normalizeMediaUrlsInHtml } from '@/lib/media-url'
 
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+    node.setAttribute('rel', 'noopener noreferrer')
+  }
+})
+
 export interface ArticleSection {
   id: string
   title: string
@@ -63,9 +69,24 @@ export function sanitizeHtml(html: string): string {
       'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'span', 'a',
       'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'img', 'figure', 'figcaption',
     ],
-    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel', 'id'],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'id', 'data-width'],
     ALLOW_DATA_ATTR: false,
   })
+}
+
+/** Санитизация HTML перед сохранением в БД */
+export function sanitizeArticleContentForStorage(content: string): string {
+  if (!content?.trim()) return ''
+  if (isLegacyContent(content)) {
+    const sections = parseSections(content)
+    return stringifySections(
+      sections.map((s) => ({
+        ...s,
+        content: sanitizeHtml(s.content),
+      }))
+    )
+  }
+  return sanitizeHtml(content)
 }
 
 export function renderArticleHtml(content: string, articleSlugs: Map<string, string>): string {

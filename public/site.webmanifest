@@ -1,0 +1,18 @@
+{
+  "name": "Эфитека",
+  "short_name": "Эфитека",
+  "description": "Эфирия: мир в деталях — путеводитель по вселенной",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#7c3aed",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

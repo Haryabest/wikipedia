@@ -1,9 +1,18 @@
 import Image from '@tiptap/extension-image'
+import { normalizeMediaUrl } from '@/lib/media-url'
 
 export const ResizableImage = Image.extend({
   addAttributes() {
+    const parent = this.parent?.() ?? {}
     return {
-      ...this.parent?.(),
+      ...parent,
+      src: {
+        ...(parent as { src?: Record<string, unknown> }).src,
+        renderHTML: (attributes: { src?: string | null }) => {
+          if (!attributes.src) return {}
+          return { src: normalizeMediaUrl(attributes.src) ?? attributes.src }
+        },
+      },
       width: {
         default: '100%',
         parseHTML: (element) => element.getAttribute('data-width') || element.style.width || '100%',

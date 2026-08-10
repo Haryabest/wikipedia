@@ -6,7 +6,7 @@ import styles from './SocialLinks.module.css'
 
 interface SocialLinksProps {
   links: SocialLinkItem[]
-  variant?: 'default' | 'header' | 'footer'
+  variant?: 'default' | 'header' | 'footer' | 'drawer'
 }
 
 export function SocialLinks({ links, variant = 'default' }: SocialLinksProps) {
@@ -18,7 +18,9 @@ export function SocialLinks({ links, variant = 'default' }: SocialLinksProps) {
       ? `${styles.row} ${styles.rowHeader}`
       : variant === 'footer'
         ? `${styles.row} ${styles.rowFooter}`
-        : styles.row
+        : variant === 'drawer'
+          ? `${styles.row} ${styles.rowDrawer}`
+          : styles.row
 
   const itemClass =
     variant === 'header'

@@ -29,10 +29,14 @@ export function rateLimit(
   return { allowed: true, remaining: limit - entry.count }
 }
 
+/** Client IP: first hop in X-Forwarded-For (typical reverse proxy). */
 export function getClientIp(request: Request): string {
-  return (
-    request.headers.get('x-real-ip') ??
-    request.headers.get('x-forwarded-for')?.split(',').at(-1)?.trim() ??
-    'unknown'
-  )
+  const forwarded = request.headers.get('x-forwarded-for')
+  if (forwarded) {
+    const client = forwarded.split(',')[0]?.trim()
+    if (client) return client
+  }
+  const realIp = request.headers.get('x-real-ip')?.trim()
+  if (realIp) return realIp
+  return 'unknown'
 }

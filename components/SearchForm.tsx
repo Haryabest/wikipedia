@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
+import { SITE_UNIVERSE_NAME } from '@/lib/site-brand'
 import styles from './SearchForm.module.css'
 
 export function SearchForm() {
@@ -26,7 +27,7 @@ export function SearchForm() {
       <div className={styles.field}>
         <input
           type="text"
-          placeholder="Поиск по wiki..."
+          placeholder={`Поиск по ${SITE_UNIVERSE_NAME}...`}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Поиск"

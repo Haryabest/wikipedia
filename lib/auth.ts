@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
+import { JWT_AUDIENCE, JWT_ISSUER } from '@/lib/auth-constants'
 
 const COOKIE_NAME = 'wiki_admin_token'
 
@@ -18,16 +19,22 @@ export async function createSessionToken(payload: SessionPayload): Promise<strin
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
+    .setIssuer(JWT_ISSUER)
+    .setAudience(JWT_AUDIENCE)
     .setExpirationTime('7d')
     .sign(getSecret())
 }
 
 export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, getSecret())
+    const { payload } = await jwtVerify(token, getSecret(), {
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    })
+    if (typeof payload.userId !== 'string' || typeof payload.email !== 'string') return null
     return {
-      userId: payload.userId as string,
-      email: payload.email as string,
+      userId: payload.userId,
+      email: payload.email,
     }
   } catch {
     return null

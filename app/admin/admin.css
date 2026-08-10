@@ -59,7 +59,7 @@
 }
 
 .admin-nav a.active {
-  background: #f5ebe6;
+  background: #ede9fe;
   color: #b45309;
   font-weight: 600;
 }
@@ -204,7 +204,7 @@
 .admin-form textarea:focus,
 .admin-form select:focus {
   outline: none;
-  border-color: #d97757;
+  border-color: #7c3aed;
   box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.15);
 }
 
@@ -310,8 +310,8 @@
 }
 
 .admin-checkbox input:checked + .admin-checkbox-box {
-  background: #d97757;
-  border-color: #d97757;
+  background: #7c3aed;
+  border-color: #7c3aed;
 }
 
 .admin-checkbox input:checked + .admin-checkbox-box::after {

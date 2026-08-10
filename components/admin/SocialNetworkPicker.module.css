@@ -21,7 +21,7 @@
 }
 
 .trigger:hover {
-  border-color: #d97757;
+  border-color: #7c3aed;
 }
 
 .triggerLabel {
@@ -92,7 +92,7 @@
 }
 
 .optionActive {
-  background: #f5ebe6;
+  background: #ede9fe;
   color: #b45309;
 }
 

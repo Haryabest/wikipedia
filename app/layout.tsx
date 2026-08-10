@@ -12,6 +12,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru">
       <head>
         <meta name="referrer" content="no-referrer" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="theme-color" content="#7c3aed" />
       </head>
       <body className="site-body">
         <div className="site-shell">

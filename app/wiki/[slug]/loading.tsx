@@ -1,11 +1,12 @@
 import { SiteHeaderWithSettings } from '@/components/SiteHeaderWithSettings'
+import { ArticleSkeleton } from '@/components/ArticleSkeleton'
 
 export default function WikiLoading() {
   return (
     <>
       <SiteHeaderWithSettings />
-      <main className="container" style={{ padding: '48px 0' }}>
-        <p>Загрузка статьи...</p>
+      <main className="container">
+        <ArticleSkeleton />
       </main>
     </>
   )

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
+import { isSafeRelativePath, sanitizeMediaUrl } from '@/lib/safe-url'
 
 const updateSchema = z.object({
   imageUrl: z.string().optional(),
@@ -37,6 +38,22 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   const data: z.infer<typeof updateSchema> & { linkUrl?: string | null } = { ...parsed.data }
+
+  if (parsed.data.imageUrl !== undefined) {
+    const safeImage = sanitizeMediaUrl(parsed.data.imageUrl)
+    if (!safeImage) {
+      return NextResponse.json({ error: 'Некорректный URL изображения' }, { status: 400 })
+    }
+    data.imageUrl = safeImage
+  }
+
+  if (parsed.data.linkUrl !== undefined && parsed.data.linkUrl?.trim() && !parsed.data.articleId) {
+    const trimmed = parsed.data.linkUrl.trim()
+    if (!isSafeRelativePath(trimmed) || !trimmed.startsWith('/wiki/')) {
+      return NextResponse.json({ error: 'Ссылка слайда должна вести на статью (/wiki/...)' }, { status: 400 })
+    }
+    data.linkUrl = trimmed
+  }
 
   if (parsed.data.articleId !== undefined) {
     if (parsed.data.articleId) {

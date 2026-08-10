@@ -16,7 +16,7 @@ export default function NotFound() {
           </p>
           <div className={styles.actions}>
             <Link href="/" className="btn btn--primary">На главную</Link>
-            <Link href="/search" className="btn">Поиск по wiki</Link>
+            <Link href="/search" className="btn">Поиск по Эфирии</Link>
           </div>
         </div>
       </main>

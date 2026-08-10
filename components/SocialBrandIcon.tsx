@@ -1,5 +1,6 @@
 import { getBrandMetaForFile, getBrandMetaForLabel } from '@/lib/simple-icon-brands'
 import { getLogoPath } from '@/lib/social-icon-logo-overrides'
+import { normalizeMediaUrl } from '@/lib/media-url'
 import styles from './SocialBrandIcon.module.css'
 
 interface SocialBrandIconProps {
@@ -39,9 +40,10 @@ export function SocialBrandIcon({
   }
 
   if (imageUrl) {
+    const resolved = normalizeMediaUrl(imageUrl)
     return (
       <span className={`${rootClass} ${styles.custom}`} title={label}>
-        <img src={imageUrl} alt={label || ''} className={styles.customImage} />
+        <img src={resolved ?? imageUrl} alt={label || ''} className={styles.customImage} />
       </span>
     )
   }

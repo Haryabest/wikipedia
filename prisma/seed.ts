@@ -22,6 +22,8 @@ async function main() {
   await prisma.siteSettings.upsert({
     where: { id: 'default' },
     update: {
+      siteName: 'Эфитека',
+      siteSubtitle: 'Эфирия: мир в деталях — путеводитель по вселенной',
       socialLinks: [
         { imageUrl: '', url: 'https://vk.com', label: 'VK', iconFile: 'VK.svg' },
         { imageUrl: '', url: 'https://t.me', label: 'Telegram', iconFile: 'Telegram.svg' },
@@ -29,7 +31,8 @@ async function main() {
     },
     create: {
       id: 'default',
-      siteName: 'Wiki',
+      siteName: 'Эфитека',
+      siteSubtitle: 'Эфирия: мир в деталях — путеводитель по вселенной',
       siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
       socialLinks: [
         { imageUrl: '', url: 'https://vk.com', label: 'VK', iconFile: 'VK.svg' },

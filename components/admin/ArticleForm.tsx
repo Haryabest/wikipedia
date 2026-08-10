@@ -7,6 +7,7 @@ import { RichTextEditor } from '@/components/RichTextEditor'
 import { AdminCheckbox } from '@/components/admin/AdminCheckbox'
 import { AdminButton, AdminIconButton } from '@/components/admin/AdminButton'
 import { ImageUploadField } from '@/components/admin/ImageUploadField'
+import { ArticlePreview } from '@/components/admin/ArticlePreview'
 import { useAdminModal } from '@/components/admin/AdminModalProvider'
 import { autoMetaDescription } from '@/lib/seo'
 import { adminFetch } from '@/lib/admin-fetch'
@@ -317,6 +318,15 @@ export function ArticleForm({ mode, articleId, initial }: ArticleFormProps) {
               </div>
               {errors.content && <span className="field-error">{errors.content}</span>}
             </div>
+
+            <ArticlePreview
+              title={title}
+              summary={summary}
+              content={content}
+              infoboxImageUrl={infoboxImageUrl}
+              infoboxCaption={infoboxCaption}
+              infoboxRows={infoboxRows}
+            />
           </div>
 
           <aside className={styles.sidebar}>

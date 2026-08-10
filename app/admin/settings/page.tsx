@@ -11,6 +11,7 @@ import { adminFetch } from '@/lib/admin-fetch'
 export default function AdminSettingsPage() {
   const modal = useAdminModal()
   const [siteName, setSiteName] = useState('')
+  const [siteSubtitle, setSiteSubtitle] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [faviconUrl, setFaviconUrl] = useState('')
   const [emblemUrl, setEmblemUrl] = useState('')
@@ -21,6 +22,7 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     adminFetch<{
       siteName?: string
+      siteSubtitle?: string | null
       logoUrl?: string | null
       faviconUrl?: string | null
       emblemUrl?: string | null
@@ -29,6 +31,7 @@ export default function AdminSettingsPage() {
     }>('/api/settings')
       .then((s) => {
         setSiteName(s.siteName ?? '')
+        setSiteSubtitle(s.siteSubtitle ?? '')
         setLogoUrl(s.logoUrl ?? '')
         setFaviconUrl(s.faviconUrl ?? '')
         setEmblemUrl(s.emblemUrl ?? '')
@@ -57,6 +60,7 @@ export default function AdminSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           siteName,
+          siteSubtitle: siteSubtitle || null,
           logoUrl: logoUrl || null,
           faviconUrl: faviconUrl || null,
           emblemUrl: emblemUrl || null,
@@ -81,9 +85,18 @@ export default function AdminSettingsPage() {
         <div className="admin-card">
           <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 600 }}>Основное и SEO</h2>
 
-          <label htmlFor="siteName">Название сайта</label>
+          <label htmlFor="siteName">Название в шапке (крупный текст)</label>
           <input id="siteName" value={siteName} onChange={(e) => setSiteName(e.target.value)} required />
-          <p className="hint">Отображается во вкладке браузера и в результатах поиска.</p>
+          <p className="hint">Например: Эфитека</p>
+
+          <label htmlFor="siteSubtitle">Подзаголовок в шапке</label>
+          <input
+            id="siteSubtitle"
+            value={siteSubtitle}
+            onChange={(e) => setSiteSubtitle(e.target.value)}
+            placeholder="Эфирия: мир в деталях — путеводитель по вселенной"
+          />
+          <p className="hint">Мелкий текст под названием. Также используется в SEO.</p>
 
           <label htmlFor="siteUrl">URL сайта (для SEO)</label>
           <input
@@ -101,15 +114,14 @@ export default function AdminSettingsPage() {
             onUpload={uploadFile}
             placeholder="URL или загрузите PNG/SVG (~32×32)"
           />
-          <p className="hint">Если пусто — используется стандартная иконка «W» или эмблема статьи.</p>
+          <p className="hint">Если пусто — используется стандартная иконка или эмблема статьи.</p>
 
           <ImageUploadField
-            label="Логотип в шапке"
+            label="Логотип (опционально, для других мест)"
             value={logoUrl}
             onChange={setLogoUrl}
             onUpload={uploadFile}
           />
-          <p className="hint">Рекомендуется горизонтальный логотип без лишних полей. Высота в шапке — до 64px.</p>
 
           <ImageUploadField
             label="Эмблема (на страницах статей)"
@@ -120,9 +132,9 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="admin-card">
-          <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 600 }}>Социальные сети</h2>
+          <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 600 }}>Ссылки в шапке</h2>
           <p className="hint" style={{ marginTop: 0, marginBottom: 20 }}>
-            Выберите соцсеть из списка, добавьте ссылку и сохраните. До 10 ссылок.
+            Соцсети, сайты, каналы и другие ресурсы. Выберите из списка (иконка «Сайт» — для обычных ссылок) или «Другое» с кастомной иконкой. До 10 ссылок.
           </p>
           <SocialLinksEditor links={socialLinks} onChange={setSocialLinks} onUpload={uploadFile} />
         </div>

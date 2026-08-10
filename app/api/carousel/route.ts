@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
+import { isSafeRelativePath, sanitizeMediaUrl } from '@/lib/safe-url'
 
 const slideSchema = z.object({
   imageUrl: z.string().min(1),
@@ -44,7 +45,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
+  const safeImage = sanitizeMediaUrl(parsed.data.imageUrl)
+  if (!safeImage) {
+    return NextResponse.json({ error: 'Некорректный URL изображения' }, { status: 400 })
+  }
+
   let linkUrl = parsed.data.linkUrl
+  if (parsed.data.linkUrl?.trim() && !parsed.data.articleId) {
+    const trimmed = parsed.data.linkUrl.trim()
+    if (!isSafeRelativePath(trimmed) || !trimmed.startsWith('/wiki/')) {
+      return NextResponse.json({ error: 'Ссылка слайда должна вести на статью (/wiki/...)' }, { status: 400 })
+    }
+    linkUrl = trimmed
+  }
+
   if (parsed.data.articleId) {
     const article = await prisma.article.findUnique({ where: { id: parsed.data.articleId } })
     if (!article) return NextResponse.json({ error: 'Статья не найдена' }, { status: 400 })
@@ -52,7 +66,7 @@ export async function POST(request: Request) {
   }
 
   const slide = await prisma.carouselSlide.create({
-    data: { ...parsed.data, linkUrl },
+    data: { ...parsed.data, imageUrl: safeImage, linkUrl },
   })
   return NextResponse.json(slide, { status: 201 })
 }

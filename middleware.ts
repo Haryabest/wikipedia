@@ -1,9 +1,26 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { jwtVerify } from 'jose'
+import { JWT_AUDIENCE, JWT_ISSUER } from '@/lib/auth-constants'
 
 const ADMIN_COOKIE = 'wiki_admin_token'
+const MAX_SEARCH_QUERY_LENGTH = 120
 
-export function middleware(request: NextRequest) {
+async function isValidAdminToken(token: string): Promise<boolean> {
+  const secret = process.env.JWT_SECRET
+  if (!secret) return false
+  try {
+    await jwtVerify(token, new TextEncoder().encode(secret), {
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') ?? ''
   const { pathname } = request.nextUrl
   const isAdminSubdomain = hostname.startsWith('admin.')
@@ -27,11 +44,27 @@ export function middleware(request: NextRequest) {
   const isAdminArea = effectivePathname.startsWith('/admin')
   const isLoginPage = effectivePathname === '/admin/login'
 
-  if (isAdminArea && !isLoginPage && !request.cookies.get(ADMIN_COOKIE)?.value) {
-    const url = request.nextUrl.clone()
-    url.pathname = isAdminSubdomain ? '/login' : '/admin/login'
-    url.search = ''
-    return NextResponse.redirect(url)
+  if (pathname.startsWith('/search')) {
+    const q = request.nextUrl.searchParams.get('q')
+    if (q && q.length > MAX_SEARCH_QUERY_LENGTH) {
+      const url = request.nextUrl.clone()
+      url.searchParams.set('q', q.slice(0, MAX_SEARCH_QUERY_LENGTH))
+      return NextResponse.redirect(url)
+    }
+  }
+
+  if (isAdminArea && !isLoginPage) {
+    const token = request.cookies.get(ADMIN_COOKIE)?.value
+    if (!token || !(await isValidAdminToken(token))) {
+      const url = request.nextUrl.clone()
+      url.pathname = isAdminSubdomain ? '/login' : '/admin/login'
+      url.search = ''
+      const response = NextResponse.redirect(url)
+      if (token) {
+        response.cookies.delete(ADMIN_COOKIE)
+      }
+      return response
+    }
   }
 
   const requestHeaders = new Headers(request.headers)

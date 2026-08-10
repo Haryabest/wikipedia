@@ -1,10 +1,12 @@
 import { cache } from 'react'
 import { prisma } from '@/lib/prisma'
+import { resolveSiteName, resolveSiteSubtitle, SITE_BRAND_NAME, SITE_BRAND_SUBTITLE } from '@/lib/site-brand'
 
 export function getDefaultSiteSettings() {
   return {
     id: 'default',
-    siteName: process.env.NEXT_PUBLIC_SITE_NAME ?? 'Wiki',
+    siteName: process.env.NEXT_PUBLIC_SITE_NAME?.trim() || SITE_BRAND_NAME,
+    siteSubtitle: SITE_BRAND_SUBTITLE,
     logoUrl: null,
     emblemUrl: null,
     faviconUrl: null,
@@ -14,7 +16,15 @@ export function getDefaultSiteSettings() {
 }
 
 export const getSiteSettings = cache(async function getSiteSettings() {
-  return (await prisma.siteSettings.findUnique({ where: { id: 'default' } })) ?? getDefaultSiteSettings()
+  const row = await prisma.siteSettings.findUnique({ where: { id: 'default' } })
+  const defaults = getDefaultSiteSettings()
+  if (!row) return defaults
+
+  return {
+    ...row,
+    siteName: resolveSiteName(row.siteName),
+    siteSubtitle: resolveSiteSubtitle(row.siteSubtitle),
+  }
 })
 
 export async function getArticleSlugMap(): Promise<Map<string, string>> {
@@ -58,6 +68,22 @@ export async function getVisibleCategories() {
       }
     })
   )
+}
+
+export async function getLatestArticles(limit?: number) {
+  return prisma.article.findMany({
+    where: { published: true, hidden: false },
+    orderBy: { updatedAt: 'desc' },
+    ...(limit !== undefined ? { take: limit } : {}),
+    select: {
+      title: true,
+      slug: true,
+      summary: true,
+      infoboxImageUrl: true,
+      updatedAt: true,
+      category: { select: { id: true, name: true, parentId: true } },
+    },
+  })
 }
 
 export async function getVisibleArticles() {
