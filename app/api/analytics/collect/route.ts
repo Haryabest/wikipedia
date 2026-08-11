@@ -38,12 +38,14 @@ export async function POST(request: Request) {
 
   const ua = request.headers.get('user-agent') ?? ''
   const { deviceType, browser, os } = parseUserAgent(ua)
+  const hostHeader = request.headers.get('host')?.split(':')[0]?.slice(0, 253) ?? null
 
   await prisma.analyticsEvent.create({
     data: {
       type: data.type,
       path: data.path.slice(0, 500),
       target: data.target?.slice(0, 500) ?? null,
+      host: hostHeader,
       referrer: data.referrer?.slice(0, 500) ?? null,
       userAgent: ua.slice(0, 500),
       deviceType,

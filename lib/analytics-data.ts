@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { formatDomainLabel } from '@/lib/site-domains'
 
 export interface DashboardStats {
   periodDays: number
@@ -12,6 +13,7 @@ export interface DashboardStats {
   dailyPageviews: Array<{ date: string; count: number }>
   topPages: Array<{ path: string; count: number }>
   topClicks: Array<{ target: string; count: number }>
+  domains: Array<{ name: string; count: number }>
   devices: Array<{ name: string; count: number }>
   browsers: Array<{ name: string; count: number }>
   os: Array<{ name: string; count: number }>
@@ -61,6 +63,7 @@ export async function getDashboardStats(periodDays: number): Promise<DashboardSt
       type: true,
       path: true,
       target: true,
+      host: true,
       referrer: true,
       deviceType: true,
       browser: true,
@@ -96,6 +99,10 @@ export async function getDashboardStats(periodDays: number): Promise<DashboardSt
       [...clicks, ...outbound].map((e) => e.target ?? e.path),
       12
     ).map(({ name, count }) => ({ target: name, count })),
+    domains: topCounts(
+      pageviews.map((e) => (e.host ? formatDomainLabel(e.host) : 'неизвестно')),
+      8
+    ),
     devices: topCounts(pageviews.map((e) => e.deviceType ?? 'unknown'), 6),
     browsers: topCounts(pageviews.map((e) => e.browser ?? 'Other'), 8),
     os: topCounts(pageviews.map((e) => e.os ?? 'Other'), 8),

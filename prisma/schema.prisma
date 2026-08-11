@@ -93,6 +93,7 @@ model AnalyticsEvent {
   type       String
   path       String
   target     String?
+  host       String?
   referrer   String?
   userAgent  String?
   deviceType String?
@@ -105,4 +106,5 @@ model AnalyticsEvent {
   @@index([createdAt])
   @@index([type, createdAt])
   @@index([path])
+  @@index([host, createdAt])
 }

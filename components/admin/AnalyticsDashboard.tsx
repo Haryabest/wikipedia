@@ -182,6 +182,11 @@ export function AnalyticsDashboard({ initialStats, initialDays }: AnalyticsDashb
           </section>
 
           <section className="admin-card">
+            <h2 className={styles.sectionTitle}>Домены · {periodLabel}</h2>
+            <BarList items={stats.domains} labelKey="name" />
+          </section>
+
+          <section className="admin-card">
             <h2 className={styles.sectionTitle}>Источники трафика · {periodLabel}</h2>
             <BarList items={stats.referrers} labelKey="name" />
           </section>

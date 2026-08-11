@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 import { JWT_AUDIENCE, JWT_ISSUER } from '@/lib/auth-constants'
+import {
+  isAdminHostname,
+  isBareIpOrLocalHost,
+  isKnownSiteHostname,
+  requestProto,
+  toAdminHostname,
+} from '@/lib/site-domains'
 
 const ADMIN_COOKIE = 'wiki_admin_token'
 const MAX_SEARCH_QUERY_LENGTH = 120
@@ -20,26 +27,22 @@ async function isValidAdminToken(token: string): Promise<boolean> {
   }
 }
 
-function isBareIpOrLocalHost(hostname: string): boolean {
-  const host = hostname.split(':')[0]
-  if (host === 'localhost' || host === '127.0.0.1') return true
-  return /^\d{1,3}(\.\d{1,3}){3}$/.test(host)
-}
-
 export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') ?? ''
   const { pathname } = request.nextUrl
-  const isAdminSubdomain = hostname.startsWith('admin.')
+  const isAdminSubdomain = isAdminHostname(hostname)
   const isApiRoute = pathname.startsWith('/api')
 
   if (
     pathname.startsWith('/admin') &&
     !isAdminSubdomain &&
     process.env.NODE_ENV === 'production' &&
-    !isBareIpOrLocalHost(hostname)
+    !isBareIpOrLocalHost(hostname) &&
+    isKnownSiteHostname(hostname)
   ) {
-    const adminHost = hostname.replace(/^(www\.)?/, 'admin.')
-    return NextResponse.redirect(new URL(pathname, `https://${adminHost}`))
+    const adminHost = toAdminHostname(hostname)
+    const proto = requestProto(request)
+    return NextResponse.redirect(new URL(pathname, `${proto}://${adminHost}`))
   }
 
   if (isAdminSubdomain && !pathname.startsWith('/admin') && !isApiRoute) {
