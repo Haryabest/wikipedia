@@ -2,7 +2,7 @@
 export const DEFAULT_SITE_DOMAINS = ['efiriya.ru', 'xn--h1aaxo8bq.xn--p1ai'] as const
 
 const DOMAIN_LABELS: Record<string, string> = {
-  efiriya.ru: 'efiriya.ru',
+  'efiriya.ru': 'efiriya.ru',
   'www.efiriya.ru': 'efiriya.ru',
   'admin.efiriya.ru': 'admin.efiriya.ru',
   'xn--h1aaxo8bq.xn--p1ai': 'эфирия.рф',
