@@ -17,9 +17,18 @@ export default function AdminSettingsPage() {
   const [emblemUrl, setEmblemUrl] = useState('')
   const [siteUrl, setSiteUrl] = useState('')
   const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>([])
+  const [adminEmail, setAdminEmail] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [saving, setSaving] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
 
   useEffect(() => {
+    adminFetch<{ email?: string }>('/api/auth/me')
+      .then((me) => setAdminEmail(me.email ?? ''))
+      .catch(() => {})
+
     adminFetch<{
       siteName?: string
       siteSubtitle?: string | null
@@ -77,6 +86,35 @@ export default function AdminSettingsPage() {
     }
   }
 
+  async function handleChangePassword(e: FormEvent) {
+    e.preventDefault()
+    if (newPassword !== confirmPassword) {
+      await modal.alert('Новый пароль и подтверждение не совпадают', 'Ошибка')
+      return
+    }
+
+    setChangingPassword(true)
+    try {
+      await adminFetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      })
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      await modal.alert('Пароль обновлён')
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Unauthorized') return
+      await modal.alert(err instanceof Error ? err.message : 'Не удалось сменить пароль', 'Ошибка')
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
   return (
     <div>
       <h1 className="admin-page-title">Настройки сайта</h1>
@@ -129,6 +167,57 @@ export default function AdminSettingsPage() {
             onChange={setEmblemUrl}
             onUpload={uploadFile}
           />
+        </div>
+
+        <div className="admin-card">
+          <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 600 }}>Аккаунт админки</h2>
+          <p className="hint" style={{ marginTop: 0, marginBottom: 20 }}>
+            Пароль хранится в базе. После смены войдите с новым паролем при следующем входе.
+          </p>
+
+          <label htmlFor="adminEmail">Email</label>
+          <input id="adminEmail" value={adminEmail} readOnly disabled />
+
+          <form onSubmit={handleChangePassword} className="admin-form" style={{ marginTop: 8 }}>
+            <label htmlFor="currentPassword">Текущий пароль</label>
+            <input
+              id="currentPassword"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              autoComplete="current-password"
+            />
+
+            <label htmlFor="newPassword">Новый пароль</label>
+            <input
+              id="newPassword"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              autoComplete="new-password"
+              minLength={8}
+            />
+            <p className="hint">Минимум 8 символов, не используйте простые пароли.</p>
+
+            <label htmlFor="confirmPassword">Подтвердите новый пароль</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+              minLength={8}
+            />
+
+            <AdminButton
+              type="submit"
+              icon="save"
+              variant="primary"
+              disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
+            >
+              {changingPassword ? 'Сохранение...' : 'Сменить пароль'}
+            </AdminButton>
+          </form>
         </div>
 
         <div className="admin-card">
