@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { COOKIE_NAME, createSessionToken } from '@/lib/auth'
+import { isSecureAuthCookie } from '@/lib/auth-cookie'
 import { getClientIp, rateLimit } from '@/lib/rate-limit'
 
 const loginSchema = z.object({
@@ -39,12 +40,10 @@ export async function POST(request: Request) {
   }
 
   const token = await createSessionToken({ userId: user.id, email: user.email })
-  const proto = request.headers.get('x-forwarded-proto') ?? 'http'
-  const secure = process.env.NODE_ENV === 'production' || proto === 'https'
   const response = NextResponse.json({ ok: true })
   response.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure,
+    secure: isSecureAuthCookie(request),
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,

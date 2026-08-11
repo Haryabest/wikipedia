@@ -20,13 +20,24 @@ async function isValidAdminToken(token: string): Promise<boolean> {
   }
 }
 
+function isBareIpOrLocalHost(hostname: string): boolean {
+  const host = hostname.split(':')[0]
+  if (host === 'localhost' || host === '127.0.0.1') return true
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(host)
+}
+
 export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') ?? ''
   const { pathname } = request.nextUrl
   const isAdminSubdomain = hostname.startsWith('admin.')
   const isApiRoute = pathname.startsWith('/api')
 
-  if (pathname.startsWith('/admin') && !isAdminSubdomain && process.env.NODE_ENV === 'production') {
+  if (
+    pathname.startsWith('/admin') &&
+    !isAdminSubdomain &&
+    process.env.NODE_ENV === 'production' &&
+    !isBareIpOrLocalHost(hostname)
+  ) {
     const adminHost = hostname.replace(/^(www\.)?/, 'admin.')
     return NextResponse.redirect(new URL(pathname, `https://${adminHost}`))
   }
