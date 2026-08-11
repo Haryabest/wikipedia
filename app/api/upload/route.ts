@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { getClientIp, rateLimit } from '@/lib/rate-limit'
+import { getMediaProxyPath } from '@/lib/media-url'
 import { uploadToMinio } from '@/lib/minio'
 import { detectImageMime, extensionForMime } from '@/lib/image-bytes'
 import { writeFile, mkdir } from 'fs/promises'
@@ -17,7 +18,7 @@ async function uploadLocal(buffer: Buffer, filename: string): Promise<string> {
   const uploadDir = path.join(process.cwd(), 'public', 'uploads')
   await mkdir(uploadDir, { recursive: true })
   await writeFile(path.join(uploadDir, filename), buffer)
-  return `/uploads/${filename}`
+  return getMediaProxyPath(`uploads/${filename}`)
 }
 
 export async function POST(request: Request) {

@@ -20,6 +20,9 @@ export function getPublicMediaUrl(key: string): string {
 /** Rewrite stored localhost MinIO URLs to the app proxy. */
 export function normalizeMediaUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined
+  if (url.startsWith('/uploads/')) {
+    return getMediaProxyPath(`uploads/${url.slice('/uploads/'.length)}`)
+  }
   if (url.startsWith('/')) return url
 
   try {
