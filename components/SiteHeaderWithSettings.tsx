@@ -13,6 +13,7 @@ export async function SiteHeaderWithSettings({ showSearch = true }: SiteHeaderWi
     <SiteHeader
       siteName={settings.siteName}
       siteSubtitle={settings.siteSubtitle}
+      logoUrl={settings.logoUrl}
       socialLinks={parseSocialLinks(settings.socialLinks)}
       showSearch={showSearch}
     />

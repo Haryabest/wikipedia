@@ -1,0 +1,76 @@
+.root {
+  flex-shrink: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.item {
+  display: block;
+  line-height: 0;
+  text-decoration: none;
+}
+
+.item:hover {
+  text-decoration: none;
+}
+
+.menuWrap {
+  position: relative;
+}
+
+.menuBtn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.menuBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  min-width: 180px;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.menuItem:hover {
+  background: var(--bg);
+  text-decoration: none;
+}
+
+.menuLabel {
+  font-size: 14px;
+  line-height: 1.3;
+}

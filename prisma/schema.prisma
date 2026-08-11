@@ -87,3 +87,22 @@ model SiteSettings {
   siteUrl     String @default("http://localhost:3000")
   socialLinks Json   @default("[]")
 }
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  type       String
+  path       String
+  target     String?
+  referrer   String?
+  userAgent  String?
+  deviceType String?
+  browser    String?
+  os         String?
+  sessionId  String?
+  ipHash     String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type, createdAt])
+  @@index([path])
+}

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Menu, Search, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { SearchForm } from './SearchForm'
-import { SocialLinks } from './SocialLinks'
+import { HeaderSocialLinks } from './HeaderSocialLinks'
+import { WikiImage } from './WikiImage'
 import { SITE_BRAND_NAME, SITE_BRAND_SUBTITLE } from '@/lib/site-brand'
 import { isSocialLinkComplete } from '@/lib/social-links'
 import type { SocialLinkItem } from '@/lib/social-links'
@@ -13,6 +14,7 @@ import styles from './SiteHeader.module.css'
 interface SiteHeaderProps {
   siteName?: string
   siteSubtitle?: string | null
+  logoUrl?: string | null
   socialLinks?: SocialLinkItem[]
   showSearch?: boolean
 }
@@ -20,57 +22,48 @@ interface SiteHeaderProps {
 export function SiteHeader({
   siteName = SITE_BRAND_NAME,
   siteSubtitle = SITE_BRAND_SUBTITLE,
+  logoUrl,
   socialLinks = [],
   showSearch = true,
 }: SiteHeaderProps) {
-  const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
 
   const displayName = siteName?.trim() || SITE_BRAND_NAME
   const displaySubtitle = siteSubtitle?.trim() || SITE_BRAND_SUBTITLE
-
-  const visibleLinks = socialLinks.filter(isSocialLinkComplete)
-  const hasLinks = visibleLinks.length > 0
+  const hasLogo = Boolean(logoUrl?.trim())
+  const hasLinks = socialLinks.some(isSocialLinkComplete)
 
   useEffect(() => {
-    if (!menuOpen && !searchOpen) return
+    if (!searchOpen) return
 
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        setMenuOpen(false)
-        setSearchOpen(false)
-      }
+      if (e.key === 'Escape') setSearchOpen(false)
     }
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [menuOpen, searchOpen])
-
-  useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : ''
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [menuOpen])
-
-  function closeAll() {
-    setMenuOpen(false)
-    setSearchOpen(false)
-  }
+  }, [searchOpen])
 
   const branding = (
-    <Link href="/" className={styles.branding} onClick={closeAll}>
+    <Link href="/" className={styles.branding}>
       <span className={styles.brandTitle}>{displayName}</span>
       <span className={styles.brandSubtitle}>{displaySubtitle}</span>
     </Link>
   )
 
+  const logoLink = hasLogo ? (
+    <Link href="/" className={styles.logoLink} aria-label={displayName}>
+      <WikiImage src={logoUrl!} alt="" className={styles.logoImg} />
+    </Link>
+  ) : null
+
   return (
     <header className="page-header">
       <div className={`container ${styles.inner}`}>
         <div className={styles.desktop}>
-          <div className={styles.linksLeft}>
-            <SocialLinks links={socialLinks} variant="header" />
+          <div className={styles.leftCluster}>
+            {logoLink}
+            {hasLinks && <HeaderSocialLinks links={socialLinks} />}
           </div>
 
           <div className={styles.brandingWrap}>{branding}</div>
@@ -81,20 +74,10 @@ export function SiteHeader({
         </div>
 
         <div className={styles.mobile}>
-          {hasLinks && (
-            <button
-              type="button"
-              className={styles.iconBtn}
-              onClick={() => {
-                setMenuOpen((open) => !open)
-                setSearchOpen(false)
-              }}
-              aria-label={menuOpen ? 'Закрыть ссылки' : 'Ссылки'}
-              aria-expanded={menuOpen}
-            >
-              {menuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-          )}
+          <div className={styles.mobileLeft}>
+            {logoLink}
+            {hasLinks && <HeaderSocialLinks links={socialLinks} />}
+          </div>
 
           <div className={styles.mobileBrand}>{branding}</div>
 
@@ -103,10 +86,7 @@ export function SiteHeader({
               <button
                 type="button"
                 className={styles.iconBtn}
-                onClick={() => {
-                  setSearchOpen((open) => !open)
-                  setMenuOpen(false)
-                }}
+                onClick={() => setSearchOpen((open) => !open)}
                 aria-label={searchOpen ? 'Скрыть поиск' : 'Поиск'}
                 aria-expanded={searchOpen}
               >
@@ -122,21 +102,6 @@ export function SiteHeader({
           </div>
         )}
       </div>
-
-      {menuOpen && hasLinks && (
-        <>
-          <button
-            type="button"
-            className={styles.backdrop}
-            onClick={() => setMenuOpen(false)}
-            aria-label="Закрыть"
-          />
-          <div className={styles.drawer} role="dialog" aria-label="Ссылки">
-            <p className={styles.drawerTitle}>Ссылки</p>
-            <SocialLinks links={socialLinks} variant="drawer" />
-          </div>
-        </>
-      )}
     </header>
   )
 }

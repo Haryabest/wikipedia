@@ -9,14 +9,44 @@
   gap: 16px;
 }
 
-.linksLeft {
+.leftCluster {
   flex: 1 1 0;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
   z-index: 2;
 }
 
-.linksLeft :global([class*="rowHeader"]) {
-  justify-content: flex-start;
+.logoLink {
+  display: block;
+  flex-shrink: 0;
+  line-height: 0;
+  text-decoration: none;
+}
+
+.logoImg {
+  display: block;
+  width: auto;
+  max-width: min(200px, 28vw);
+  height: auto;
+  max-height: 48px;
+  min-height: 36px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.mobileLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.mobileLeft .logoImg {
+  max-width: 120px;
+  max-height: 40px;
+  min-height: 32px;
 }
 
 .brandingWrap {
@@ -137,47 +167,6 @@
 .mobileSearch :global(.search-form) {
   max-width: none;
   width: 100%;
-}
-
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  border: none;
-  background: rgba(0, 0, 0, 0.35);
-  cursor: pointer;
-}
-
-.drawer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 100;
-  width: min(320px, 88vw);
-  height: 100%;
-  padding: 72px 20px 24px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.12);
-  animation: slideInLeft 0.2s ease-out;
-}
-
-.drawerTitle {
-  margin: 0 0 16px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-@keyframes slideInLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
 }
 
 @media (max-width: 768px) {

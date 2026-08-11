@@ -6,6 +6,7 @@ import { AdminIcon, type AdminIconName } from '@/components/admin/AdminIcon'
 
 const NAV_ITEMS: Array<{ href: string; label: string; icon: AdminIconName; exact?: boolean }> = [
   { href: '/admin', label: 'Обзор', icon: 'home', exact: true },
+  { href: '/admin/dashboard', label: 'Дашборд', icon: 'dashboard' },
   { href: '/admin/articles', label: 'Статьи', icon: 'article' },
   { href: '/admin/categories', label: 'Категории', icon: 'category' },
   { href: '/admin/carousel', label: 'Карусель', icon: 'carousel' },

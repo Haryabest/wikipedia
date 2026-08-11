@@ -2,6 +2,8 @@ import type { NextConfig } from 'next'
 
 const isProd = process.env.NODE_ENV === 'production'
 
+const tunnelOrigins = ['localhost:3000', '127.0.0.1:3000', '*.fxtun.dev', '*.fxtun.net']
+
 const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
   ...(isProd
@@ -31,6 +33,13 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Tunnel (fxtun.dev): client JS + Server Actions через прокси
+  allowedDevOrigins: ['*.fxtun.dev', '*.fxtun.net'],
+  experimental: {
+    serverActions: {
+      allowedOrigins: tunnelOrigins,
+    },
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },

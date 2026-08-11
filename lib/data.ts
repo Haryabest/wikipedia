@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { prisma } from '@/lib/prisma'
 import { resolveSiteName, resolveSiteSubtitle, SITE_BRAND_NAME, SITE_BRAND_SUBTITLE } from '@/lib/site-brand'
+import { resolveSiteUrl } from '@/lib/site-url'
 
 export function getDefaultSiteSettings() {
   return {
@@ -10,7 +11,7 @@ export function getDefaultSiteSettings() {
     logoUrl: null,
     emblemUrl: null,
     faviconUrl: null,
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'http://localhost:3000',
     socialLinks: [],
   }
 }
@@ -24,6 +25,7 @@ export const getSiteSettings = cache(async function getSiteSettings() {
     ...row,
     siteName: resolveSiteName(row.siteName),
     siteSubtitle: resolveSiteSubtitle(row.siteSubtitle),
+    siteUrl: resolveSiteUrl(row.siteUrl),
   }
 })
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ConditionalFooter } from '@/components/ConditionalFooter'
+import { ConditionalAnalytics } from '@/components/ConditionalAnalytics'
 import { buildRootMetadata } from '@/lib/site-metadata'
 import './globals.css'
 
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="site-shell">
           {children}
         </div>
+        <ConditionalAnalytics />
         <ConditionalFooter />
       </body>
     </html>

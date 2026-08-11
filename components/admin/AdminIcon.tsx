@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
+  BarChart2,
   Check,
   ExternalLink,
   Eye,
@@ -39,6 +40,7 @@ export type AdminIconName =
   | 'external'
   | 'home'
   | 'preview'
+  | 'dashboard'
 
 const ICONS: Record<AdminIconName, LucideIcon> = {
   plus: Plus,
@@ -59,6 +61,7 @@ const ICONS: Record<AdminIconName, LucideIcon> = {
   external: ExternalLink,
   home: Home,
   preview: ScanEye,
+  dashboard: BarChart2,
 }
 
 interface AdminIconProps {
